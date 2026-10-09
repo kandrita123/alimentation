@@ -57,6 +57,11 @@ button,input,select{font:inherit;color:inherit}
 .legend .amt{text-align:right;font-weight:500}
 .dot{width:12px;height:12px;border-radius:4px;flex:none;display:inline-block}
 
+.app-head{margin:6px 0 26px}
+.app-head h1{font-size:clamp(2.2rem,10vw,3.2rem);font-weight:800;letter-spacing:-.03em;font-variation-settings:"opsz" 96;line-height:1;margin:0 0 8px}
+.app-head p{color:var(--muted);margin:0 0 16px}
+.stripe{display:flex;gap:3px;height:10px}
+.stripe i{flex:1;border-radius:3px}
 .tabs{display:grid;grid-template-columns:repeat(5,1fr);margin:0 0 18px;border-bottom:1px solid var(--line)}
 .tabs button{background:none;border:0;padding:12px 2px;cursor:pointer;color:var(--muted);font-weight:500;font-size:.9rem;border-bottom:3px solid transparent;margin-bottom:-1px}
 .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
@@ -127,7 +132,11 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
 </head>
 <body>
 <main>
-
+  <header class="app-head">
+    <h1>Mon poste alimentation</h1>
+    <p>Courses, repas du midi et cantine de Raphaëlle</p>
+    <div class="stripe" aria-hidden="true"><i style="background:var(--c-drive)"></i><i style="background:var(--c-magasin)"></i><i style="background:var(--c-autre)"></i><i style="background:var(--c-livraison)"></i><i style="background:var(--c-recharge)"></i><i style="background:var(--c-midi)"></i><i style="background:var(--c-ecole)"></i></div>
+  </header>
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="saisie">Saisir</button>
     <button role="tab" aria-selected="false" data-tab="liste">Ce mois</button>
