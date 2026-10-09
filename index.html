@@ -45,7 +45,8 @@ button,input,select{font:inherit;color:inherit}
 .month-nav{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .month-nav button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:22px;line-height:1;cursor:pointer}
 .month-name{font-size:1.05rem;font-weight:500;text-transform:capitalize;color:var(--muted)}
-.total{font-size:clamp(2.8rem,13vw,4.2rem);font-weight:800;letter-spacing:-.03em;font-variation-settings:"opsz" 96;line-height:1;margin:14px 0 4px}
+.total-label{margin:14px 0 0;color:var(--muted);font-size:.9rem}
+.total{font-size:clamp(2.8rem,13vw,4.2rem);font-weight:800;letter-spacing:-.03em;font-variation-settings:"opsz" 96;line-height:1;margin:4px 0 4px}
 .total-sub{color:var(--muted);font-size:.95rem;margin:0 0 10px}
 .bar{display:flex;height:34px;border-radius:10px;overflow:hidden;background:var(--soft);gap:2px;margin-top:6px}
 .bar.empty{border:2px dashed var(--line);background:transparent}
@@ -56,7 +57,7 @@ button,input,select{font:inherit;color:inherit}
 .legend .amt{text-align:right;font-weight:500}
 .dot{width:12px;height:12px;border-radius:4px;flex:none;display:inline-block}
 
-.tabs{display:grid;grid-template-columns:repeat(5,1fr);margin:26px 0 18px;border-bottom:1px solid var(--line)}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);margin:0 0 18px;border-bottom:1px solid var(--line)}
 .tabs button{background:none;border:0;padding:12px 2px;cursor:pointer;color:var(--muted);font-weight:500;font-size:.9rem;border-bottom:3px solid transparent;margin-bottom:-1px}
 .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
 
@@ -70,6 +71,8 @@ legend,.field-label{font-weight:500;margin-bottom:8px;display:block;padding:0}
 .cats input:focus-visible + span{outline:3px solid var(--accent);outline-offset:2px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
 .row.one{grid-template-columns:1fr}
+.row>div{min-width:0}
+input[type="date"]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%}
 .input{width:100%;padding:12px 13px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:16px;min-height:48px}
 .amount-input{font-size:1.5rem;font-weight:700}
 .hint{color:var(--muted);font-size:.88rem;margin:0 0 16px}
@@ -124,23 +127,11 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
 </head>
 <body>
 <main>
-  <header>
-    <div class="month-nav">
-      <button id="prev" aria-label="Mois précédent">‹</button>
-      <div class="month-name" id="monthName"></div>
-      <button id="next" aria-label="Mois suivant">›</button>
-    </div>
-    <div class="total" id="monthTotal">0,00 €</div>
-    <p class="total-sub" id="monthSub"></p>
-    <p class="total-sub" id="schoolSub" hidden></p>
-    <div class="bar" id="monthBar" role="img"></div>
-    <ul class="legend" id="monthLegend"></ul>
-  </header>
 
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="saisie">Saisir</button>
     <button role="tab" aria-selected="false" data-tab="liste">Ce mois</button>
-    <button role="tab" aria-selected="false" data-tab="midis">Midis</button>
+    <button role="tab" aria-selected="false" data-tab="midis">Moi</button>
     <button role="tab" aria-selected="false" data-tab="fille">Raphaëlle</button>
     <button role="tab" aria-selected="false" data-tab="bilan">Bilan</button>
   </nav>
@@ -171,6 +162,18 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
   </section>
 
   <section id="tab-liste" hidden>
+    <div class="month-nav">
+      <button id="prev" aria-label="Mois précédent">‹</button>
+      <div class="month-name" id="monthName"></div>
+      <button id="next" aria-label="Mois suivant">›</button>
+    </div>
+    <p class="total-label">Total alimentation du mois, toutes catégories</p>
+    <div class="total" id="monthTotal">0,00 €</div>
+    <p class="total-sub" id="monthSub"></p>
+    <p class="total-sub" id="schoolSub" hidden></p>
+    <div class="bar" id="monthBar" role="img"></div>
+    <ul class="legend" id="monthLegend"></ul>
+    <div style="height:22px"></div>
     <div id="list"></div>
   </section>
 
@@ -484,7 +487,7 @@ function renderMidis(){
     add(eur.format(cs.recharges),cs.solde?`Rechargé, dont ${eur.format(cs.solde.montant)} encore sur la carte`:'Rechargé au total (solde non renseigné)',true);
   }
   if(!$('solde').matches(':focus')&&!$('soldeDate').matches(':focus')){
-    $('solde').value=cs.solde?fmtNum(cs.solde.montant):'';$('soldeDate').value=cs.solde?.date||'';
+    $('solde').value=cs.solde?fmtNum(cs.solde.montant.toFixed(2)):'';$('soldeDate').value=cs.solde?.date||'';
   }
   const ul=$('midis');if(ul.contains(document.activeElement)) return;
   ul.innerHTML='';
@@ -530,7 +533,7 @@ function renderFille(){
       if(x>=0) cur[k]=x; else delete cur[k];
       if(cur.montant==null&&cur.repas==null) delete state.settings.fille[m]; else state.settings.fille[m]=cur;
     };
-    li.appendChild(numberInput(f.montant!=null?fmtNum(f.montant):'','Facture en '+monthLabel(m),true,v=>upd('montant',v)));
+    li.appendChild(numberInput(f.montant!=null?fmtNum(f.montant.toFixed(2)):'','Facture en '+monthLabel(m),true,v=>upd('montant',v)));
     li.appendChild(numberInput(f.repas??'','Repas facturés en '+monthLabel(m),false,v=>upd('repas',v)));
     ul.appendChild(li);
   }
