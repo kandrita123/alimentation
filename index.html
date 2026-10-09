@@ -7,7 +7,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Alimentation">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&display=swap" rel="stylesheet">
@@ -15,7 +14,7 @@
 :root{
   --bg:#EEF1EC; --surface:#FFFFFF; --ink:#1C2420; --muted:#5F6E65; --line:#D5DCD4; --soft:#E2E8E1;
   --accent:#B8325A; --on-accent:#FFFFFF;
-  --c-drive:#3E6B4F; --c-magasin:#C08A2E; --c-livraison:#B8325A; --c-cantine:#4A6FA5; --c-ecole:#7B5BA6;
+  --c-drive:#3E6B4F; --c-magasin:#C08A2E; --c-autre:#8A7A52; --c-livraison:#B8325A; --c-midi:#D46A3C; --c-recharge:#4A6FA5; --c-ecole:#7B5BA6;
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
@@ -25,111 +24,88 @@
   :root:not([data-theme="light"]){
     --bg:#121815; --surface:#1B231F; --ink:#E7ECE8; --muted:#97A59C; --line:#2C3732; --soft:#232D28;
     --accent:#E46D90; --on-accent:#1B0B11;
-    --c-drive:#6FA683; --c-magasin:#D9A84E; --c-livraison:#E46D90; --c-cantine:#7C9DD0; --c-ecole:#A88BD0;
+    --c-drive:#6FA683; --c-magasin:#D9A84E; --c-autre:#B8A77A; --c-livraison:#E46D90; --c-midi:#E8895E; --c-recharge:#7C9DD0; --c-ecole:#A88BD0;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
   --bg:#121815; --surface:#1B231F; --ink:#E7ECE8; --muted:#97A59C; --line:#2C3732; --soft:#232D28;
   --accent:#E46D90; --on-accent:#1B0B11;
-  --c-drive:#6FA683; --c-magasin:#D9A84E; --c-livraison:#E46D90; --c-cantine:#7C9DD0; --c-ecole:#A88BD0;
+  --c-drive:#6FA683; --c-magasin:#D9A84E; --c-autre:#B8A77A; --c-livraison:#E46D90; --c-midi:#E8895E; --c-recharge:#7C9DD0; --c-ecole:#A88BD0;
   color-scheme:dark;
 }
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
-body{
-  margin:0;background:var(--bg);color:var(--ink);
-  font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  font-variant-numeric:tabular-nums;line-height:1.45;font-size:16px;
-}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Bricolage Grotesque",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-variant-numeric:tabular-nums;line-height:1.45;font-size:16px}
 main{max-width:560px;margin:0 auto;padding:18px 16px 56px}
 button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px;border-radius:6px}
+[hidden]{display:none!important}
 
-/* En-tête : le mois et son assiette */
 .month-nav{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.month-nav button{
-  width:44px;height:44px;border-radius:50%;border:1px solid var(--line);
-  background:var(--surface);font-size:22px;line-height:1;cursor:pointer;
-}
+.month-nav button{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:22px;line-height:1;cursor:pointer}
 .month-name{font-size:1.05rem;font-weight:500;text-transform:capitalize;color:var(--muted)}
-.total{
-  font-size:clamp(2.8rem,13vw,4.2rem);font-weight:800;letter-spacing:-.03em;
-  font-variation-settings:"opsz" 96;line-height:1;margin:14px 0 4px;
-}
-.total-sub{color:var(--muted);font-size:.95rem;margin:0 0 14px}
-.bar{display:flex;height:34px;border-radius:10px;overflow:hidden;background:var(--soft);gap:2px}
+.total{font-size:clamp(2.8rem,13vw,4.2rem);font-weight:800;letter-spacing:-.03em;font-variation-settings:"opsz" 96;line-height:1;margin:14px 0 4px}
+.total-sub{color:var(--muted);font-size:.95rem;margin:0 0 10px}
+.bar{display:flex;height:34px;border-radius:10px;overflow:hidden;background:var(--soft);gap:2px;margin-top:6px}
 .bar.empty{border:2px dashed var(--line);background:transparent}
 .bar span{display:block;height:100%;transition:width .35s ease}
 .legend{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:1fr auto;row-gap:6px;column-gap:12px}
 .legend li{display:contents}
 .legend .lbl{display:flex;align-items:center;gap:8px}
 .legend .amt{text-align:right;font-weight:500}
-.dot{width:12px;height:12px;border-radius:4px;flex:none}
+.dot{width:12px;height:12px;border-radius:4px;flex:none;display:inline-block}
 
-/* Onglets */
-.tabs{display:grid;grid-template-columns:repeat(3,1fr);margin:26px 0 18px;border-bottom:1px solid var(--line)}
-.tabs button{
-  background:none;border:0;padding:12px 4px;cursor:pointer;color:var(--muted);font-weight:500;
-  border-bottom:3px solid transparent;margin-bottom:-1px;
-}
+.tabs{display:grid;grid-template-columns:repeat(5,1fr);margin:26px 0 18px;border-bottom:1px solid var(--line)}
+.tabs button{background:none;border:0;padding:12px 2px;cursor:pointer;color:var(--muted);font-weight:500;font-size:.9rem;border-bottom:3px solid transparent;margin-bottom:-1px}
 .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
-[hidden]{display:none!important}
 
-/* Saisie */
 fieldset{border:0;margin:0 0 18px;padding:0}
 legend,.field-label{font-weight:500;margin-bottom:8px;display:block;padding:0}
 .cats{display:flex;flex-wrap:wrap;gap:8px}
 .cats label{position:relative}
 .cats input{position:absolute;opacity:0;inset:0;margin:0}
-.cats span{
-  display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border-radius:999px;
-  border:1px solid var(--line);background:var(--surface);cursor:pointer;
-}
+.cats span{display:inline-flex;align-items:center;gap:8px;padding:9px 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);cursor:pointer}
 .cats input:checked + span{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
 .cats input:focus-visible + span{outline:3px solid var(--accent);outline-offset:2px}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
 .row.one{grid-template-columns:1fr}
-.input{
-  width:100%;padding:12px 13px;border-radius:10px;border:1px solid var(--line);
-  background:var(--surface);font-size:16px;min-height:48px;
-}
+.input{width:100%;padding:12px 13px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-size:16px;min-height:48px}
 .amount-input{font-size:1.5rem;font-weight:700}
-.hint{color:var(--muted);font-size:.88rem;margin:-8px 0 16px}
-.primary{
-  width:100%;min-height:52px;border:0;border-radius:12px;background:var(--accent);color:var(--on-accent);
-  font-weight:700;font-size:1.05rem;cursor:pointer;
-}
-.secondary{
-  min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);
-  background:var(--surface);cursor:pointer;font-weight:500;
-}
+.hint{color:var(--muted);font-size:.88rem;margin:0 0 16px}
+.primary{width:100%;min-height:52px;border:0;border-radius:12px;background:var(--accent);color:var(--on-accent);font-weight:700;font-size:1.05rem;cursor:pointer}
+.secondary{min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:500;margin:0 6px 8px 0}
 
-/* Liste du mois */
 .day{margin:0 0 14px}
 .day h3{font-size:.9rem;font-weight:500;color:var(--muted);margin:0 0 6px}
-.entry{
-  display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;
-  background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 6px 10px 12px;margin-bottom:6px;
-}
+.entry{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 6px 10px 12px;margin-bottom:6px}
+.entry.virtual{background:transparent;border-style:dashed;padding-right:12px}
 .entry .what{min-width:0}
 .entry .what small{display:block;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .entry .amt{font-weight:700}
 .del{width:40px;height:40px;border:0;background:none;color:var(--muted);font-size:20px;cursor:pointer;border-radius:8px}
 .empty-msg{color:var(--muted);padding:20px 0}
 
-/* Bilan */
+.grid-head,.grid li{display:grid;gap:8px 10px;align-items:center}
+.grid-head{color:var(--muted);font-size:.85rem;text-align:center;margin-bottom:4px}
+.grid-head span:first-child{text-align:left}
+.grid{list-style:none;margin:0;padding:0}
+.grid li{padding:10px 0;border-bottom:1px solid var(--line)}
+.grid .m{text-transform:capitalize;font-weight:500}
+.grid .m small{display:block;color:var(--muted);font-weight:400;text-transform:none;font-size:.85rem}
+.grid input{text-align:center;padding:10px 4px}
+.g2{grid-template-columns:1fr 5em}
+.g3{grid-template-columns:1fr 6em 4.6em}
+
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
 .stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
 .stat.wide{grid-column:1/-1}
 .stat b{display:block;font-size:1.6rem;font-weight:800;letter-spacing:-.02em}
 .stat span{color:var(--muted);font-size:.9rem}
 .months{list-style:none;margin:0;padding:0}
-.months button{
-  width:100%;display:grid;grid-template-columns:7.5em 1fr auto;align-items:center;gap:10px;
-  background:none;border:0;border-bottom:1px solid var(--line);padding:11px 2px;cursor:pointer;text-align:left;
-}
+.months button{width:100%;display:grid;grid-template-columns:7.5em 1fr auto;align-items:center;gap:10px;background:none;border:0;border-bottom:1px solid var(--line);padding:11px 2px;cursor:pointer;text-align:left}
 .months .m{text-transform:capitalize}
+.months .m small{display:block;color:var(--muted);font-size:.8rem;text-transform:none}
 .months .mini{display:flex;height:10px;border-radius:4px;overflow:hidden;gap:1px}
 .months .v{font-weight:700;min-width:5.5em;text-align:right}
 .months button[aria-pressed="true"]{opacity:.45}
@@ -138,15 +114,10 @@ legend,.field-label{font-weight:500;margin-bottom:8px;display:block;padding:0}
 details{margin-top:26px;border-top:1px solid var(--line);padding-top:12px}
 summary{cursor:pointer;font-weight:500;padding:6px 0}
 .settings-grid{display:grid;grid-template-columns:1fr 7em;gap:10px 12px;align-items:center;margin:12px 0 18px}
-.months .m small{display:block;color:var(--muted);font-size:.8rem;text-transform:none}
 .days{display:flex;flex-wrap:wrap;gap:6px;grid-column:1/-1}
 .days label{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
 .status{color:var(--muted);font-size:.85rem;margin-top:22px}
-.toast{
-  position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
-  background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:500;
-  opacity:0;pointer-events:none;transition:opacity .2s;
-}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
 @media (prefers-reduced-motion:reduce){.bar span,.toast{transition:none}}
 </style>
@@ -169,6 +140,8 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
   <nav class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="saisie">Saisir</button>
     <button role="tab" aria-selected="false" data-tab="liste">Ce mois</button>
+    <button role="tab" aria-selected="false" data-tab="midis">Midis</button>
+    <button role="tab" aria-selected="false" data-tab="fille">Raphaëlle</button>
     <button role="tab" aria-selected="false" data-tab="bilan">Bilan</button>
   </nav>
 
@@ -177,44 +150,52 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
       <legend>Catégorie</legend>
       <div class="cats" id="catPicker"></div>
     </fieldset>
-
-    <div id="perDayBox" hidden>
-      <div class="row">
-        <div>
-          <label class="field-label" for="rateSel">Tarif</label>
-          <select class="input" id="rateSel"></select>
-        </div>
-        <div>
-          <label class="field-label" for="days">Nombre de jours</label>
-          <input class="input" id="days" type="number" inputmode="numeric" min="1" step="1" value="1">
-        </div>
-      </div>
-    </div>
-
+    <p class="hint" id="catHint"></p>
     <div class="row">
       <div>
         <label class="field-label" for="amount">Montant (€)</label>
         <input class="input amount-input" id="amount" inputmode="decimal" placeholder="0,00" autocomplete="off">
       </div>
       <div>
-        <label class="field-label" for="date">Date</label>
+        <label class="field-label" for="date">Date d'achat</label>
         <input class="input" id="date" type="date">
       </div>
     </div>
-    <p class="hint" id="amountHint" hidden></p>
-
     <div class="row one">
       <div>
         <label class="field-label" for="note">Note (facultatif)</label>
-        <input class="input" id="note" placeholder="ex. réassort pain et lait" autocomplete="off">
+        <input class="input" id="note" placeholder="ex. Auchan, Picard, sandwich" autocomplete="off">
       </div>
     </div>
-
     <button class="primary" id="addBtn">Ajouter la dépense</button>
   </section>
 
   <section id="tab-liste" hidden>
     <div id="list"></div>
+  </section>
+
+  <section id="tab-midis" hidden>
+    <p class="hint">Indiquez vos jours à Saint-Denis chaque mois. Les recharges de carte et les « Midi au travail » se saisissent dans Saisir. Repas à la cantine = jours à Saint-Denis moins vos midis au travail.</p>
+    <div class="stats" id="cardStats"></div>
+    <div class="row" style="align-items:end">
+      <div>
+        <label class="field-label" for="solde">Solde de ma carte (facultatif)</label>
+        <input class="input" id="solde" inputmode="decimal" placeholder="ex. 42,50">
+      </div>
+      <div>
+        <label class="field-label" for="soldeDate">Lu le</label>
+        <input class="input" id="soldeDate" type="date">
+      </div>
+    </div>
+    <p class="hint" style="margin-top:-8px">Le solde affine le prix moyen : sans lui, l'argent encore sur la carte est compté comme déjà mangé. Mettez-le à jour quand vous le voyez, après avoir saisi vos jours du mois.</p>
+    <div class="grid-head g2"><span>Mois</span><span>Jours à Saint-Denis</span></div>
+    <ul class="grid" id="midis"></ul>
+  </section>
+
+  <section id="tab-fille" hidden>
+    <p class="hint">Recopiez chaque facture de cantine : le total TTC et le nombre de repas facturés (réservations comprises), dans le mois qu'elle couvre.</p>
+    <div class="grid-head g3"><span>Mois</span><span>Facture (€)</span><span>Repas</span></div>
+    <ul class="grid" id="fille"></ul>
   </section>
 
   <section id="tab-bilan" hidden>
@@ -235,67 +216,91 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
     <ul class="months" id="months"></ul>
 
     <details>
-      <summary>Tarifs et export</summary>
+      <summary>Réglages et sauvegarde</summary>
       <div class="settings-grid">
-        <label for="r-cantine">Ma cantine (€ / jour)</label>
-        <input class="input" id="r-cantine" inputmode="decimal">
-        <label for="r-internat">Internat (€ / jour)</label>
-        <input class="input" id="r-internat" inputmode="decimal">
-        <label for="r-demipension">Demi-pension (€ / repas)</label>
+        <label for="r-demipension">Prix d'un repas de Raphaëlle en demi-pension (€)</label>
         <input class="input" id="r-demipension" inputmode="decimal">
-        <label for="demiFrom">Demi-pension à partir du</label>
+        <label for="demiFrom">Demi-pension de Raphaëlle à partir du</label>
         <input class="input" id="demiFrom" type="date">
-        <span>Jours de cantine de ma fille</span>
-        <span></span>
+        <span>Jours de cantine de Raphaëlle</span><span></span>
         <div class="days" id="schoolDays"></div>
       </div>
       <button class="secondary" id="saveRates">Enregistrer les réglages</button>
-      <button class="secondary" id="exportBtn">Exporter en CSV</button>
-      <button class="secondary" id="importBtn">Importer un CSV</button>
-      <input type="file" id="importFile" accept=".csv,text/csv,text/plain" hidden>
-      <button class="secondary" id="clearBtn">Tout effacer</button>
+      <div style="margin-top:14px">
+        <button class="secondary" id="exportBtn">Exporter en CSV</button>
+        <button class="secondary" id="importBtn">Importer un CSV</button>
+        <button class="secondary" id="clearBtn">Tout effacer</button>
+        <input type="file" id="importFile" accept=".csv,text/csv,text/plain" hidden>
+      </div>
     </details>
   </section>
 
-  <p class="status" id="status">Chargement…</p>
+  <p class="status" id="status">Données enregistrées dans ce navigateur uniquement. Exportez une sauvegarde CSV chaque mois.</p>
 </main>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
+/* ---------- Catégories ---------- */
 const CATS = [
-  {id:'drive',     label:'Drive Monoprix',          group:'maison'},
-  {id:'magasin',   label:'Magasin',                 group:'maison'},
-  {id:'livraison', label:'Livraison de repas',      group:'dehors'},
-  {id:'cantine',   label:'Ma cantine',              group:'dehors', rates:['cantine']},
-  {id:'ecole',     label:'Repas école de ma fille', group:'dehors', rates:['internat','demipension']},
+  {id:'drive',     label:'Livraison Monoprix',     group:'maison', button:true, hint:'Commandes Monoprix livrées. Pour une commande faite pour le mois suivant, mettez la date du mois où vous la consommez.'},
+  {id:'magasin',   label:'Magasin',                group:'maison', button:true, hint:'Achats en magasin : Auchan, Picard, boulangerie, marché…'},
+  {id:'autre',     label:'Autre',                  group:'maison', button:true, hint:'Nourriture ou café achetés uniquement en ligne.'},
+  {id:'livraison', label:'Livraison / à emporter', group:'dehors', button:true, hint:'Repas livrés, et repas achetés tout prêts un jour où vous n\'êtes pas sur site.'},
+  {id:'recharge',  label:'Recharge cantine',       group:'dehors', button:true, hint:'Chaque recharge de votre carte de cantine, à sa date. Elle compte comme dépense du mois où vous la faites.'},
+  {id:'midi',      label:'Midi au travail',        group:'dehors', button:true, hint:'Un jour à Saint-Denis sans cantine : sandwich, restaurant, repas apporté (0 €). Une saisie par jour.'},
+  {id:'ecole',     label:'Cantine Raphaëlle',      group:'dehors', button:false},
 ];
-const RATE_LABELS = {cantine:'Ma cantine', internat:'Internat', demipension:'Demi-pension'};
-const DEFAULTS = {rates:{cantine:8, internat:13.4, demipension:7}, excluded:[], demiFrom:'2026-11-02', schoolDays:[1,2,4,5]};
+const CAT_ALIASES = {'drive monoprix':'drive','livraison de repas':'livraison','mes déjeuners':'midi','ma cantine':'midi'};
+const isRechargeNote = n => /recharge/i.test(n||'');
+const DEFAULTS = {rates:{demipension:7}, excluded:[], demiFrom:'2026-11-02', schoolDays:[1,2,4,5], work:{}, fille:{}, solde:null};
 const WD = [[1,'lun.'],[2,'mar.'],[3,'mer.'],[4,'jeu.'],[5,'ven.']];
 const catById = Object.fromEntries(CATS.map(c=>[c.id,c]));
 const eur = new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'});
 const $ = id => document.getElementById(id);
 const colorVar = id => `var(--c-${id})`;
 
-const state = {
-  mode:'loading', entries:[], settings:structuredClone(DEFAULTS),
-  month: ymOf(new Date()), cat:'drive', tab:'saisie',
-};
-let remote = null; // {entries, settings}
-let downloads = null;
+const state = {entries:[], settings:structuredClone(DEFAULTS), month:ymOf(new Date()), cat:'drive', tab:'saisie'};
 
 function ymOf(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')}
-function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function monthLabel(ym){const [y,m]=ym.split('-').map(Number);return new Date(y,m-1,1).toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}
 function shiftMonth(ym,n){const [y,m]=ym.split('-').map(Number);return ymOf(new Date(y,m-1+n,1))}
-function parseAmount(s){const v=parseFloat(String(s).replace(/\s/g,'').replace(',','.'));return isFinite(v)?Math.round(v*100)/100:NaN}
+function parseAmount(s){const v=parseFloat(String(s??'').replace(/\s/g,'').replace(',','.'));return isFinite(v)?Math.round(v*100)/100:NaN}
 function fmtNum(v){return String(v).replace('.',',')}
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),2000)}
+const round2=v=>Math.round(v*100)/100;
 
-function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1800)}
+/* ---------- Stockage local ---------- */
+function load(){
+  try{
+    const e=JSON.parse(localStorage.getItem('alim-entries')||'[]');
+    const s=JSON.parse(localStorage.getItem('alim-settings')||'null');
+    state.entries=Array.isArray(e)?e:[];
+    if(s) state.settings={...structuredClone(DEFAULTS),...s,rates:{...DEFAULTS.rates,...(s.rates||{})},work:s.work||{},fille:s.fille||{}};
+  }catch(_){}
+  migrate();
+}
+function save(){
+  try{localStorage.setItem('alim-entries',JSON.stringify(state.entries));localStorage.setItem('alim-settings',JSON.stringify(state.settings));}
+  catch(_){toast('Enregistrement impossible sur cet appareil')}
+}
+/* anciennes versions : déjeuners en "cantine", repas école en dépenses */
+function migrate(){
+  let changed=false;
+  for(const e of state.entries){ if(e.cat==='cantine'){e.cat=isRechargeNote(e.note)?'recharge':'midi';changed=true} }
+  const ecole=state.entries.filter(e=>e.cat==='ecole');
+  for(const e of ecole){
+    const ym=e.date.slice(0,7),f=state.settings.fille[ym]||{montant:0,repas:0};
+    const n=e.qty||parseInt((e.note||'').match(/(\d+)\s*(j|repas)/)?.[1]||'0',10);
+    state.settings.fille[ym]={montant:round2((f.montant||0)+e.amount),repas:(f.repas||0)+n};
+  }
+  if(ecole.length){state.entries=state.entries.filter(e=>e.cat!=='ecole');changed=true}
+  for(const w of Object.values(state.settings.work)) if('cantine' in w){delete w.cantine;changed=true}
+  if(changed) save();
+}
 
 /* ---------- Calendrier scolaire (vacances.csv) ---------- */
 let holidays=[];
-function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function parseVacances(text){
   const isD=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||'');
   return text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l&&!l.startsWith('#'))
@@ -328,90 +333,45 @@ function calendarKnown(ym){
   const min=holidays.reduce((a,h)=>h.debut<a?h.debut:a,'9999'),max=holidays.reduce((a,h)=>h.reprise>a?h.reprise:a,'0000');
   return ym>=min.slice(0,7)&&ym<=max.slice(0,7);
 }
-/* jours ouvrés du mois : classe / vacances, et repas de demi-pension attendus */
 function monthCal(ym){
   if(!calendarKnown(ym)) return null;
   const [y,m]=ym.split('-').map(Number),n=new Date(y,m,0).getDate();
   const sd=new Set(state.settings.schoolDays||DEFAULTS.schoolDays);
-  let classe=0,vac=0,repas=0;
+  let ouvres=0,classe=0,vac=0,repas=0;
   for(let d=1;d<=n;d++){
     const dt=new Date(y,m-1,d),wd=dt.getDay(),s=iso(dt);
     if(wd===0||wd===6||feries(y).has(s)) continue;
+    ouvres++;
     if(isVacation(s)) vac++;
     else{classe++; if(sd.has(wd)&&s>=(state.settings.demiFrom||'9999')) repas++}
   }
-  return {classe,vac,repas,type:vac>=(classe+vac)/2?'vacances':'scolaire'};
-}
-
-/* ---------- Stockage ---------- */
-function loadLocal(){
-  try{
-    const e=JSON.parse(localStorage.getItem('alim-entries')||'[]');
-    const s=JSON.parse(localStorage.getItem('alim-settings')||'null');
-    state.entries=Array.isArray(e)?e:[];
-    if(s) state.settings={...structuredClone(DEFAULTS),...s,rates:{...DEFAULTS.rates,...(s.rates||{})}};
-  }catch(_){}
-}
-function saveLocal(){
-  try{
-    localStorage.setItem('alim-entries',JSON.stringify(state.entries));
-    localStorage.setItem('alim-settings',JSON.stringify(state.settings));
-  }catch(_){}
-}
-function useLocal(){
-  state.mode='local';loadLocal();
-  $('status').textContent="Données enregistrées dans ce navigateur uniquement. Exportez une sauvegarde CSV chaque mois.";
-  render();
-}
-
-async function init(){
-  render();
-  if(!window.claude||!window.claude.use){useLocal();return}
-  try{
-    const [db,user,dl]=await Promise.all([claude.use('db'),claude.use('user'),claude.use('downloads')]);
-    downloads=dl;
-    const uid = db&&user ? await user.id() : null;
-    if(!db||!uid){useLocal();return}
-    const base='data/users/'+uid;
-    remote={
-      entries: db.doc(base+'/journal').collection('entries'),
-      settings: db.doc(base+'/settings'),
-    };
-    state.mode='db';
-    $('status').textContent="Données enregistrées dans votre compte, visibles de vous seule.";
-    remote.entries.onSnapshot(snap=>{
-      state.entries=snap.docs.map(d=>({id:d.id,...d.data()}));render();
-    },()=>{$('status').textContent="Connexion perdue : rechargez la page pour retrouver vos données."});
-    remote.settings.onSnapshot(s=>{
-      if(s.exists){const d=s.data();state.settings={...structuredClone(DEFAULTS),...d,rates:{...DEFAULTS.rates,...(d.rates||{})}}}
-      fillRates();render();
-    });
-  }catch(_){useLocal()}
-}
-
-async function addEntry(e){
-  e.createdAt=Date.now();
-  if(state.mode==='db'){await remote.entries.add(e)}
-  else{e.id='e'+e.createdAt+Math.random().toString(36).slice(2,7);state.entries.push(e);saveLocal();render()}
-}
-async function deleteEntry(id){
-  if(state.mode==='db'){await remote.entries.doc(id).delete()}
-  else{state.entries=state.entries.filter(x=>x.id!==id);saveLocal();render()}
-}
-async function saveSettings(){
-  if(state.mode==='db'){await remote.settings.set(structuredClone(state.settings))}
-  else{saveLocal()}
-  render();
+  return {ouvres,classe,vac,repas,type:vac>=(classe+vac)/2?'vacances':'scolaire'};
 }
 
 /* ---------- Calculs ---------- */
+function lunch(ym){
+  const site=state.settings.work[ym]?.site||0;
+  const inMonth=c=>state.entries.filter(e=>e.cat===c&&e.date.startsWith(ym));
+  const midis=inMonth('midi');
+  const midiSum=round2(midis.reduce((a,e)=>a+e.amount,0));
+  const recharges=round2(inMonth('recharge').reduce((a,e)=>a+e.amount,0));
+  return {site,midiCount:midis.length,midiSum,recharges,repas:Math.max(0,site-midis.length),overflow:midis.length>site&&site>0};
+}
+/* bilan cumulé de la carte : prix moyen d'un repas */
+function cardStats(){
+  const months=Object.keys(state.settings.work).sort();
+  let repas=0,site=0,midiSum=0;
+  for(const m of months){const l=lunch(m);repas+=l.repas;site+=l.site;midiSum+=l.midiSum}
+  const recharges=round2(state.entries.filter(e=>e.cat==='recharge').reduce((a,e)=>a+e.amount,0));
+  const solde=state.settings.solde;
+  const consomme=round2(recharges-(solde?.montant||0));
+  return {repas,site,midiSum,recharges,solde,consomme,prix:repas?consomme/repas:null,parJour:site?(consomme+midiSum)/site:null};
+}
 function byMonth(){
   const map={};
-  for(const e of state.entries){
-    const ym=(e.date||'').slice(0,7); if(!ym) continue;
-    map[ym]??={total:0,cats:{}};
-    map[ym].total+=e.amount; map[ym].cats[e.cat]=(map[ym].cats[e.cat]||0)+e.amount;
-  }
+  const add=(ym,cat,v)=>{map[ym]??={total:0,cats:{}};map[ym].total+=v;map[ym].cats[cat]=(map[ym].cats[cat]||0)+v};
+  for(const e of state.entries){const ym=(e.date||'').slice(0,7);if(ym) add(ym,e.cat,e.amount)}
+  for(const [ym,f] of Object.entries(state.settings.fille)){if(f.montant) add(ym,'ecole',f.montant)}
   return map;
 }
 function barSpans(cats,total,el){
@@ -423,6 +383,13 @@ function barSpans(cats,total,el){
     el.appendChild(s);
   }
 }
+function monthRange(){
+  const now=ymOf(new Date());
+  const keys=[...state.entries.map(e=>e.date.slice(0,7)),...Object.keys(state.settings.work),...Object.keys(state.settings.fille)].sort();
+  let start=shiftMonth(now,-11); if(keys[0]&&keys[0]<start) start=keys[0];
+  const out=[];for(let m=now;m>=start;m=shiftMonth(m,-1)) out.push(m);
+  return out;
+}
 
 /* ---------- Rendu ---------- */
 function render(){
@@ -430,17 +397,15 @@ function render(){
   const cur=months[state.month]||{total:0,cats:{}};
   $('monthName').textContent=monthLabel(state.month);
   $('monthTotal').textContent=eur.format(cur.total);
-  const n=state.entries.filter(e=>(e.date||'').startsWith(state.month)).length;
-  $('monthSub').textContent = n ? `${n} dépense${n>1?'s':''} saisie${n>1?'s':''}` : 'Aucune dépense saisie ce mois-ci';
+  const n=state.entries.filter(e=>e.date.startsWith(state.month)).length;
+  $('monthSub').textContent=n?`${n} dépense${n>1?'s':''} saisie${n>1?'s':''}`:'Aucune dépense saisie ce mois-ci';
   const cal=monthCal(state.month),ss=$('schoolSub');
   if(cal){
     let t=`${cal.classe} jour${cal.classe>1?'s':''} de classe, ${cal.vac} de vacances.`;
-    if(cal.repas) t+=` Demi-pension attendue : ${cal.repas} repas, ${eur.format(cal.repas*state.settings.rates.demipension)}.`;
+    if(cal.repas) t+=` Cantine Raphaëlle attendue : ${cal.repas} repas, ${eur.format(cal.repas*state.settings.rates.demipension)}.`;
     ss.textContent=t;ss.hidden=false;
   }else ss.hidden=true;
-  const bar=$('monthBar');
-  bar.classList.toggle('empty',!cur.total);
-  barSpans(cur.cats,cur.total||1,bar);
+  const bar=$('monthBar');bar.classList.toggle('empty',!cur.total);barSpans(cur.cats,cur.total||1,bar);
   bar.setAttribute('aria-label',CATS.map(c=>`${c.label} ${eur.format(cur.cats[c.id]||0)}`).join(', '));
   const lg=$('monthLegend');lg.innerHTML='';
   for(const c of CATS){
@@ -451,45 +416,35 @@ function render(){
     li.querySelector('.amt').textContent=eur.format(v)+'  ('+Math.round(v/cur.total*100)+' %)';
     lg.appendChild(li);
   }
-  renderList();renderBilan(months);
+  renderList();renderMidis();renderFille();renderBilan(months);
 }
 
 function renderCats(){
   const box=$('catPicker');box.innerHTML='';
-  for(const c of CATS){
+  for(const c of CATS.filter(c=>c.button)){
     const l=document.createElement('label');
     l.innerHTML=`<input type="radio" name="cat" value="${c.id}"><span><i class="dot" style="background:${colorVar(c.id)}"></i></span>`;
     l.querySelector('span').append(c.label);
     const inp=l.querySelector('input');inp.checked=c.id===state.cat;
-    inp.addEventListener('change',()=>{state.cat=c.id;updatePerDay()});
+    inp.addEventListener('change',()=>{state.cat=c.id;$('catHint').textContent=c.hint||''});
     box.appendChild(l);
   }
-}
-function updatePerDay(){
-  const c=catById[state.cat];
-  $('perDayBox').hidden=!c.rates;
-  $('amountHint').hidden=!c.rates;
-  if(c.rates){
-    const sel=$('rateSel');sel.innerHTML='';
-    for(const r of c.rates){
-      const o=document.createElement('option');o.value=r;
-      o.textContent=`${RATE_LABELS[r]} (${eur.format(state.settings.rates[r])})`;sel.appendChild(o);
-    }
-    computePerDay();
-  }else{$('amount').value=''}
-}
-function computePerDay(){
-  const r=state.settings.rates[$('rateSel').value]||0;
-  const d=Math.max(1,parseInt($('days').value,10)||1);
-  $('amount').value=fmtNum((Math.round(r*d*100)/100).toFixed(2));
-  $('amountHint').textContent=`${d} × ${eur.format(r)}. Vous pouvez saisir une semaine entière d'un coup.`;
+  $('catHint').textContent=catById[state.cat].hint||'';
 }
 
+function virtualRow(cat,title,detail,amount){
+  const row=document.createElement('div');row.className='entry virtual';
+  row.innerHTML=`<i class="dot" style="background:${colorVar(cat)}"></i><div class="what"><div></div><small></small></div><div class="amt"></div><span></span>`;
+  row.querySelector('.what div').textContent=title;row.querySelector('small').textContent=detail;
+  row.querySelector('.amt').textContent=eur.format(amount);
+  return row;
+}
 function renderList(){
   const box=$('list');box.innerHTML='';
-  const items=state.entries.filter(e=>(e.date||'').startsWith(state.month))
-    .sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
-  if(!items.length){box.innerHTML='<p class="empty-msg">Rien pour ce mois. Ajoutez une dépense dans l\'onglet Saisir.</p>';return}
+  const f=state.settings.fille[state.month];
+  if(f&&f.montant) box.appendChild(virtualRow('ecole','Cantine Raphaëlle',`Facture, ${f.repas||0} repas`,f.montant));
+  const items=state.entries.filter(e=>e.date.startsWith(state.month)).sort((a,b)=>b.date.localeCompare(a.date)||(b.createdAt||0)-(a.createdAt||0));
+  if(!items.length&&!box.children.length){box.innerHTML='<p class="empty-msg">Rien pour ce mois. Ajoutez une dépense dans l\'onglet Saisir.</p>';return}
   let day=null,sec=null;
   for(const e of items){
     if(e.date!==day){
@@ -502,15 +457,82 @@ function renderList(){
     const row=document.createElement('div');row.className='entry';
     row.innerHTML=`<i class="dot" style="background:${colorVar(e.cat)}"></i><div class="what"><div></div><small></small></div><div class="amt"></div><button class="del" aria-label="Supprimer">×</button>`;
     row.querySelector('.what div').textContent=c.label;
-    const detail=[e.qty&&e.rateKey?`${e.qty} j × ${eur.format(e.rate)} (${RATE_LABELS[e.rateKey]||''})`:'',e.note||''].filter(Boolean).join(' – ');
-    row.querySelector('small').textContent=detail;
-    if(!detail) row.querySelector('small').remove();
+    if(e.note) row.querySelector('small').textContent=e.note; else row.querySelector('small').remove();
     row.querySelector('.amt').textContent=eur.format(e.amount);
-    row.querySelector('.del').addEventListener('click',async()=>{
+    row.querySelector('.del').addEventListener('click',()=>{
       if(!confirm(`Supprimer ${c.label} ${eur.format(e.amount)} ?`)) return;
-      try{await deleteEntry(e.id);toast('Dépense supprimée')}catch(_){toast('Suppression impossible, réessayez')}
+      state.entries=state.entries.filter(x=>x.id!==e.id);save();render();toast('Dépense supprimée');
     });
     sec.appendChild(row);
+  }
+}
+
+function numberInput(value,label,decimal,onChange){
+  const inp=document.createElement('input');
+  inp.className='input';inp.type=decimal?'text':'number';inp.inputMode=decimal?'decimal':'numeric';
+  if(!decimal){inp.min='0';inp.step='1'}
+  inp.setAttribute('aria-label',label);inp.value=value;
+  inp.addEventListener('change',()=>{onChange(inp.value);save();render();toast('Enregistré')});
+  return inp;
+}
+function renderMidis(){
+  const cs=cardStats(),st=$('cardStats');st.innerHTML='';
+  const add=(v,l,wide)=>{const d=document.createElement('div');d.className='stat'+(wide?' wide':'');d.innerHTML='<b></b><span></span>';d.querySelector('b').textContent=v;d.querySelector('span').textContent=l;st.appendChild(d)};
+  if(cs.site){
+    add(cs.prix!=null?eur.format(cs.prix):'–',`Prix moyen d'un repas à la cantine (${cs.repas} repas)`);
+    add(cs.parJour!=null?eur.format(cs.parJour):'–',`Coût moyen d'un midi à Saint-Denis (${cs.site} jours)`);
+    add(eur.format(cs.recharges),cs.solde?`Rechargé, dont ${eur.format(cs.solde.montant)} encore sur la carte`:'Rechargé au total (solde non renseigné)',true);
+  }
+  if(!$('solde').matches(':focus')&&!$('soldeDate').matches(':focus')){
+    $('solde').value=cs.solde?fmtNum(cs.solde.montant):'';$('soldeDate').value=cs.solde?.date||'';
+  }
+  const ul=$('midis');if(ul.contains(document.activeElement)) return;
+  ul.innerHTML='';
+  for(const m of monthRange()){
+    const l=lunch(m),cal=monthCal(m);
+    const li=document.createElement('li');li.className='g2';
+    li.innerHTML=`<div class="m"><span></span><small></small></div>`;
+    li.querySelector('.m span').textContent=monthLabel(m);
+    const parts=[];
+    if(l.site){
+      parts.push(`${l.repas} repas cantine, ${l.midiCount} midi${l.midiCount>1?'s':''} au travail (${eur.format(l.midiSum)})`);
+      if(l.recharges) parts.push(`rechargé ${eur.format(l.recharges)}`);
+      if(l.overflow) parts.push('plus de midis au travail que de jours : à vérifier');
+    }else if(l.recharges) parts.push(`rechargé ${eur.format(l.recharges)}`);
+    else if(cal) parts.push(`${cal.ouvres} jours ouvrés`);
+    li.querySelector('small').textContent=parts.join(', ');
+    li.appendChild(numberInput(state.settings.work[m]?.site??'','Jours à Saint-Denis en '+monthLabel(m),false,v=>{
+      const n=parseInt(v,10);
+      if(n>=0) state.settings.work[m]={site:n}; else delete state.settings.work[m];
+    }));
+    ul.appendChild(li);
+  }
+}
+function renderFille(){
+  const ul=$('fille');if(ul.contains(document.activeElement)) return;
+  ul.innerHTML='';
+  for(const m of monthRange()){
+    const f=state.settings.fille[m]||{},cal=monthCal(m);
+    const li=document.createElement('li');li.className='g3';
+    li.innerHTML=`<div class="m"><span></span><small></small></div>`;
+    li.querySelector('.m span').textContent=monthLabel(m);
+    const parts=[];
+    if(f.montant&&f.repas) parts.push(`${eur.format(f.montant/f.repas)} par repas`);
+    if(cal&&cal.repas){
+      let t=`attendus : ${cal.repas} repas`;
+      if(f.repas&&f.repas!==cal.repas) t+=` (écart ${f.repas-cal.repas>0?'+':''}${f.repas-cal.repas})`;
+      parts.push(t);
+    }
+    li.querySelector('small').textContent=parts.join(', ');
+    const upd=(k,v)=>{
+      const cur={...(state.settings.fille[m]||{})};
+      const x=k==='montant'?parseAmount(v):parseInt(v,10);
+      if(x>=0) cur[k]=x; else delete cur[k];
+      if(cur.montant==null&&cur.repas==null) delete state.settings.fille[m]; else state.settings.fille[m]=cur;
+    };
+    li.appendChild(numberInput(f.montant!=null?fmtNum(f.montant):'','Facture en '+monthLabel(m),true,v=>upd('montant',v)));
+    li.appendChild(numberInput(f.repas??'','Repas facturés en '+monthLabel(m),false,v=>upd('repas',v)));
+    ul.appendChild(li);
   }
 }
 
@@ -518,47 +540,43 @@ function renderBilan(months){
   const now=ymOf(new Date());
   const keys=Object.keys(months).sort();
   const nPeriod=parseInt($('period').value,10);
-  let list=[];
+  const list=[];
   if(keys.length){
     let start=keys[0];
-    if(nPeriod) {const s=shiftMonth(now,-(nPeriod-1)); if(s>start) start=s}
+    if(nPeriod){const s=shiftMonth(now,-(nPeriod-1));if(s>start) start=s}
     for(let m=start;m<=now;m=shiftMonth(m,1)) list.push(m);
   }
   const excl=new Set(state.settings.excluded||[]);
   const used=list.filter(m=>!excl.has(m));
-  const sumCat=id=>used.reduce((a,m)=>a+((months[m]?.cats[id])||0),0);
+  const sumCats=ids=>used.reduce((a,m)=>a+ids.reduce((b,id)=>b+((months[m]?.cats[id])||0),0),0);
   const tot=used.reduce((a,m)=>a+(months[m]?.total||0),0);
   const avg=used.length?tot/used.length:0;
-  const maison=CATS.filter(c=>c.group==='maison').reduce((a,c)=>a+sumCat(c.id),0);
-  const dehors=tot-maison;
-  const st=$('stats');
+  const maison=sumCats(CATS.filter(c=>c.group==='maison').map(c=>c.id));
+  const midis=sumCats(['recharge','midi']);
+  const fille=sumCats(['ecole']);
+  const st=$('stats');st.innerHTML='';
   if(!used.length){st.innerHTML='<p class="empty-msg stat wide">Pas encore assez de données sur cette période.</p>'}
   else{
-    st.innerHTML='';
     const add=(v,l,wide)=>{const d=document.createElement('div');d.className='stat'+(wide?' wide':'');d.innerHTML='<b></b><span></span>';d.querySelector('b').textContent=v;d.querySelector('span').textContent=l;st.appendChild(d)};
     add(eur.format(avg),`Moyenne par mois, sur ${used.length} mois retenu${used.length>1?'s':''}`,true);
-    add(eur.format(maison/used.length),'Courses maison / mois (drive + magasin)');
-    add(eur.format(dehors/used.length),'Repas dehors / mois (livraison, cantines, école)');
+    add(eur.format(maison/used.length),'Courses maison / mois');
+    add(eur.format(sumCats(['livraison'])/used.length),'Livraison et à emporter / mois');
+    add(eur.format(midis/used.length),'Mes midis : recharges et midis au travail / mois');
+    add(eur.format(fille/used.length),'Cantine Raphaëlle / mois');
     const typed=t=>used.filter(m=>monthCal(m)?.type===t);
-    const sc=typed('scolaire'),va=typed('vacances');
     const avgOf=l=>l.length?l.reduce((a,m)=>a+(months[m]?.total||0),0)/l.length:null;
-    const aS=avgOf(sc),aV=avgOf(va);
+    const sc=typed('scolaire'),va=typed('vacances'),aS=avgOf(sc),aV=avgOf(va);
     if(aS!=null) add(eur.format(aS),`Mois scolaire moyen (${sc.length} mois)`);
     if(aV!=null) add(eur.format(aV),`Mois de vacances moyen (${va.length} mois)`);
     let proj=0,ok=true;
-    for(let i=0,m=now;i<12;i++,m=shiftMonth(m,1)){
-      const c=monthCal(m); if(!c){ok=false;break}
-      proj+=(c.type==='vacances'?(aV??avg):(aS??avg));
-    }
-    add(eur.format(ok?proj:avg*12),ok?'Projection sur les 12 prochains mois, selon le calendrier scolaire':'Projection sur 12 mois (calendrier scolaire incomplet)');
-    add(tot?Math.round(dehors/tot*100)+' %':'–','Part des repas dehors');
+    for(let i=0,m=now;i<12;i++,m=shiftMonth(m,1)){const c=monthCal(m);if(!c){ok=false;break}proj+=(c.type==='vacances'?(aV??avg):(aS??avg))}
+    add(eur.format(ok?proj:avg*12),ok?'Projection sur les 12 prochains mois, selon le calendrier scolaire':'Projection sur 12 mois',true);
   }
   const ul=$('months');ul.innerHTML='';
   const max=Math.max(1,...list.map(m=>months[m]?.total||0));
   for(const m of [...list].reverse()){
     const d=months[m]||{total:0,cats:{}};
-    const li=document.createElement('li');
-    const b=document.createElement('button');
+    const li=document.createElement('li'),b=document.createElement('button');
     b.setAttribute('aria-pressed',excl.has(m)?'true':'false');
     b.innerHTML=`<span class="m"><span></span><small></small></span><span class="mini"></span><span class="v"></span>`;
     b.querySelector('.m span').textContent=monthLabel(m);
@@ -567,26 +585,20 @@ function renderBilan(months){
     const mini=b.querySelector('.mini');mini.style.width=(d.total/max*100)+'%';barSpans(d.cats,d.total||1,mini);
     b.querySelector('.v').textContent=eur.format(d.total);
     b.setAttribute('aria-label',`${monthLabel(m)}, ${eur.format(d.total)}${excl.has(m)?', exclu de la moyenne':''}`);
-    b.addEventListener('click',async()=>{
-      const s=new Set(state.settings.excluded||[]);
-      s.has(m)?s.delete(m):s.add(m);
-      state.settings.excluded=[...s].sort();
-      try{await saveSettings();toast(s.has(m)?'Mois exclu de la moyenne':'Mois réintégré')}catch(_){toast('Enregistrement impossible')}
+    b.addEventListener('click',()=>{
+      const s=new Set(state.settings.excluded||[]);s.has(m)?s.delete(m):s.add(m);
+      state.settings.excluded=[...s].sort();save();render();toast(s.has(m)?'Mois exclu de la moyenne':'Mois réintégré');
     });
     li.appendChild(b);ul.appendChild(li);
   }
 }
 
-function fillRates(){
-  for(const k of ['cantine','internat','demipension']) $('r-'+k).value=fmtNum(state.settings.rates[k]);
+function fillSettings(){
+  $('r-demipension').value=fmtNum(state.settings.rates.demipension);
   $('demiFrom').value=state.settings.demiFrom||'';
   const box=$('schoolDays');box.innerHTML='';
   const sd=new Set(state.settings.schoolDays||DEFAULTS.schoolDays);
-  for(const [n,l] of WD){
-    const lab=document.createElement('label');
-    lab.innerHTML=`<input type="checkbox" value="${n}"${sd.has(n)?' checked':''}>`;lab.append(l);box.appendChild(lab);
-  }
-  if(catById[state.cat].rates) updatePerDay();
+  for(const [n,l] of WD){const lab=document.createElement('label');lab.innerHTML=`<input type="checkbox" value="${n}"${sd.has(n)?' checked':''}>`;lab.append(l);box.appendChild(lab)}
 }
 
 /* ---------- Événements ---------- */
@@ -595,85 +607,60 @@ $('next').onclick=()=>{state.month=shiftMonth(state.month,1);render()};
 document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{
   state.tab=b.dataset.tab;
   document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b?'true':'false'));
-  for(const t of ['saisie','liste','bilan']) $('tab-'+t).hidden=t!==state.tab;
+  for(const t of ['saisie','liste','midis','fille','bilan']) $('tab-'+t).hidden=t!==state.tab;
 }));
-$('rateSel').addEventListener('change',computePerDay);
-$('days').addEventListener('input',computePerDay);
 $('period').addEventListener('change',render);
+function saveSolde(){
+  const v=parseAmount($('solde').value);
+  state.settings.solde=v>=0?{montant:v,date:$('soldeDate').value||iso(new Date())}:null;
+  save();render();toast(state.settings.solde?'Solde enregistré':'Solde effacé');
+}
+$('solde').addEventListener('change',saveSolde);
+$('soldeDate').addEventListener('change',()=>{if($('solde').value) saveSolde()});
 
-$('addBtn').addEventListener('click',async()=>{
-  const amount=parseAmount($('amount').value);
-  const date=$('date').value;
-  if(!(amount>0)){toast('Indiquez un montant');$('amount').focus();return}
+$('addBtn').addEventListener('click',()=>{
+  const amount=parseAmount($('amount').value),date=$('date').value;
+  const zeroOk=state.cat==='midi';
+  if(!(amount>0)&&!(zeroOk&&amount===0)){toast(zeroOk?'Indiquez un montant (0 pour un repas apporté)':'Indiquez un montant');$('amount').focus();return}
   if(!date){toast('Indiquez une date');return}
-  const c=catById[state.cat];
-  const e={date,cat:state.cat,amount,note:$('note').value.trim()};
-  if(c.rates){
-    e.rateKey=$('rateSel').value;e.rate=state.settings.rates[e.rateKey];
-    e.qty=Math.max(1,parseInt($('days').value,10)||1);
-  }
-  const btn=$('addBtn');btn.disabled=true;
-  try{
-    await addEntry(e);
-    toast('Dépense ajoutée');
-    $('note').value='';
-    if(c.rates){$('days').value=1;computePerDay()}else $('amount').value='';
-    state.month=date.slice(0,7);render();
-  }catch(_){toast('Enregistrement impossible, réessayez')}
-  btn.disabled=false;
+  state.entries.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,7),date,cat:state.cat,amount,note:$('note').value.trim(),createdAt:Date.now()});
+  save();toast('Dépense ajoutée');
+  $('amount').value='';$('note').value='';
+  state.month=date.slice(0,7);render();
 });
 
-$('saveRates').addEventListener('click',async()=>{
-  const r={};
-  for(const k of ['cantine','internat','demipension']){
-    const v=parseAmount($('r-'+k).value);
-    if(!(v>=0)){toast('Tarif invalide : '+RATE_LABELS[k]);return}
-    r[k]=v;
-  }
-  state.settings.rates=r;
+$('saveRates').addEventListener('click',()=>{
+  const d=parseAmount($('r-demipension').value);
+  if(!(d>=0)){toast('Prix invalide');return}
+  state.settings.rates={...state.settings.rates,demipension:d};
   state.settings.demiFrom=$('demiFrom').value||'';
   state.settings.schoolDays=[...$('schoolDays').querySelectorAll('input:checked')].map(i=>+i.value);
-  try{await saveSettings();updatePerDay();toast('Réglages enregistrés')}catch(_){toast('Enregistrement impossible')}
+  save();render();toast('Réglages enregistrés');
 });
 
-$('exportBtn').addEventListener('click',async()=>{
+$('exportBtn').addEventListener('click',()=>{
+  const q=v=>`"${String(v??'').replace(/"/g,'""')}"`;
   const rows=[['date','categorie','montant','jours','tarif','note']];
-  for(const e of [...state.entries].sort((a,b)=>a.date.localeCompare(b.date))){
-    rows.push([e.date,(catById[e.cat]||{label:e.cat}).label,fmtNum(e.amount.toFixed(2)),e.qty||'',e.rate!=null?fmtNum(e.rate):'',(e.note||'').replace(/"/g,'""')]);
-  }
-  const csv='\ufeff'+rows.map(r=>r.map(v=>`"${v}"`).join(';')).join('\n');
-  const filename='depenses-alimentation-'+todayISO()+'.csv';
-  if(downloads){
-    try{await downloads.save({filename,data:csv});}
-    catch(err){if(err?.code!=='declined') toast('Export impossible')}
-    return;
-  }
+  for(const e of [...state.entries].sort((a,b)=>a.date.localeCompare(b.date)))
+    rows.push([e.date,(catById[e.cat]||{label:e.cat}).label,fmtNum(e.amount.toFixed(2)),'','',e.note||'']);
+  for(const [ym,w] of Object.entries(state.settings.work).sort()) rows.push([ym+'-01','Jours à Saint-Denis','0',w.site||0,'','']);
+  for(const [ym,f] of Object.entries(state.settings.fille).sort()) rows.push([ym+'-01','Cantine Raphaëlle',fmtNum((f.montant||0).toFixed(2)),f.repas||0,'','']);
+  if(state.settings.solde) rows.push([state.settings.solde.date,'Solde carte cantine',fmtNum(state.settings.solde.montant.toFixed(2)),'','','']);
+  const csv='\ufeff'+rows.map(r=>r.map(q).join(';')).join('\n');
   const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
-  const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),5000);
+  const a=document.createElement('a');a.href=url;a.download='depenses-alimentation-'+iso(new Date())+'.csv';
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),5000);
 });
 
-$('clearBtn').addEventListener('click',async()=>{
-  const n=state.entries.length;
-  if(!n){toast('Aucune dépense à effacer');return}
-  if(!confirm('Effacer les '+n+' dépenses ? Pensez à exporter une sauvegarde avant. Les tarifs sont conservés.')) return;
-  try{
-    if(state.mode==='db'){for(const e of [...state.entries]) await remote.entries.doc(e.id).delete()}
-    else{state.entries=[];saveLocal();render()}
-    toast('Toutes les dépenses ont été effacées');
-  }catch(_){toast('Effacement incomplet, réessayez')}
-});
-
-/* ---------- Import CSV (même format que l'export) ---------- */
 function parseCSV(text){
   text=text.replace(/^\ufeff/,'');
   const rows=[];let row=[],f='',q=false;
   for(let i=0;i<text.length;i++){
     const ch=text[i];
-    if(q){ if(ch==='"'){ if(text[i+1]==='"'){f+='"';i++} else q=false } else f+=ch }
+    if(q){if(ch==='"'){if(text[i+1]==='"'){f+='"';i++}else q=false}else f+=ch}
     else if(ch==='"') q=true;
     else if(ch===';'){row.push(f);f=''}
-    else if(ch==='\n'||ch==='\r'){ if(ch==='\r'&&text[i+1]==='\n') i++; row.push(f);rows.push(row);row=[];f='' }
+    else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&text[i+1]==='\n') i++;row.push(f);rows.push(row);row=[];f=''}
     else f+=ch;
   }
   if(f||row.length){row.push(f);rows.push(row)}
@@ -682,41 +669,57 @@ function parseCSV(text){
 const keyOf=e=>e.date+'|'+e.cat+'|'+Number(e.amount).toFixed(2);
 function catFrom(v){
   const t=String(v||'').trim().toLowerCase();
-  const c=CATS.find(c=>c.id===t||c.label.toLowerCase()===t);
+  if(CAT_ALIASES[t]) return CAT_ALIASES[t];
+  const c=CATS.find(c=>c.button&&(c.id===t||c.label.toLowerCase()===t));
   return c?c.id:null;
 }
 $('importBtn').addEventListener('click',()=>$('importFile').click());
 $('importFile').addEventListener('change',async ev=>{
-  const file=ev.target.files[0]; if(!file) return;
+  const file=ev.target.files[0];if(!file) return;
   try{
     const rows=parseCSV(await file.text());
-    const head=(rows[0]||[]).map(h=>h.trim().toLowerCase());
-    const col=n=>head.indexOf(n);
+    const head=(rows[0]||[]).map(h=>h.trim().toLowerCase()),col=n=>head.indexOf(n);
     if(col('date')<0||col('categorie')<0||col('montant')<0){toast('Fichier non reconnu : colonnes date, categorie, montant attendues');return}
-    const seen=new Set(state.entries.map(keyOf));
-    let added=0,skipped=0;
+    const cell=(r,n)=>col(n)>=0?(r[col(n)]||'').trim():'';
+    const seen=new Set(state.entries.map(keyOf)),touchedFille=new Set();
+    let added=0,skipped=0,other=0;
     for(const r of rows.slice(1)){
-      const date=(r[col('date')]||'').trim();
-      const cat=catFrom(r[col('categorie')]);
-      const amount=parseAmount(r[col('montant')]);
-      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!cat||!(amount>0)){skipped++;continue}
-      const e={date,cat,amount,note:col('note')>=0?(r[col('note')]||'').trim():''};
-      const qty=col('jours')>=0?parseInt(r[col('jours')],10):NaN;
-      const rate=col('tarif')>=0?parseAmount(r[col('tarif')]):NaN;
-      if(qty>0&&rate>=0){e.qty=qty;e.rate=rate;e.rateKey=cat==='cantine'?'cantine':(Math.abs(rate-state.settings.rates.internat)<0.01?'internat':'demipension')}
+      const date=cell(r,'date'),catTxt=cell(r,'categorie').toLowerCase(),ym=date.slice(0,7);
+      if(!/^\d{4}-\d{2}/.test(date)){skipped++;continue}
+      if(catTxt==='solde carte cantine'){state.settings.solde={montant:parseAmount(cell(r,'montant'))||0,date};other++;continue}
+      if(catTxt==='jours sur site'||catTxt==='jours à saint-denis'){state.settings.work[ym]={site:parseInt(cell(r,'jours'),10)||0};other++;continue}
+      if(catTxt==='repas cantine'){state.settings.work[ym]={site:parseInt(cell(r,'note'),10)||0};other++;continue}
+      if(catTxt==='cantine raphaëlle'||catTxt==='repas école de ma fille'){
+        const mt=parseAmount(cell(r,'montant'))||0;
+        const rp=parseInt(cell(r,'jours'),10)||parseInt((cell(r,'note').match(/(\d+)\s*(j|repas)/)||[])[1]||'0',10);
+        const prev=touchedFille.has(ym)?state.settings.fille[ym]:{montant:0,repas:0};
+        state.settings.fille[ym]={montant:round2(prev.montant+mt),repas:prev.repas+rp};
+        touchedFille.add(ym);other++;continue;
+      }
+      let cat=catFrom(catTxt);const amount=parseAmount(cell(r,'montant'));
+      if(catTxt==='ma cantine'&&isRechargeNote(cell(r,'note'))) cat='recharge';
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!cat||!(amount>0||(cat==='midi'&&amount===0))){skipped++;continue}
+      const e={date,cat,amount,note:cell(r,'note')};
       if(seen.has(keyOf(e))){skipped++;continue}
       seen.add(keyOf(e));
-      await addEntry(e);added++;
+      state.entries.push({...e,id:'e'+Date.now()+Math.random().toString(36).slice(2,7),createdAt:Date.now()});added++;
     }
-    toast(added+' dépense'+(added>1?'s':'')+' importée'+(added>1?'s':'')+(skipped?', '+skipped+' ignorée'+(skipped>1?'s':''):''));
+    save();render();
+    toast(`${added} dépense${added>1?'s':''} importée${added>1?'s':''}`+(other?`, ${other} ligne${other>1?'s':''} jours, solde ou Raphaëlle`:'')+(skipped?`, ${skipped} ignorée${skipped>1?'s':''}`:''));
   }catch(_){toast('Import impossible')}
   ev.target.value='';
 });
 
-$('date').value=todayISO();
-renderCats();updatePerDay();fillRates();
-init();
-loadVacances();
+$('clearBtn').addEventListener('click',()=>{
+  if(!state.entries.length&&!Object.keys(state.settings.work).length&&!Object.keys(state.settings.fille).length){toast('Rien à effacer');return}
+  if(!confirm('Tout effacer : dépenses, jours à Saint-Denis, solde de carte et factures de Raphaëlle ? Pensez à exporter une sauvegarde avant. Les réglages sont conservés.')) return;
+  state.entries=[];state.settings.work={};state.settings.fille={};state.settings.excluded=[];state.settings.solde=null;
+  save();render();toast('Données effacées');
+});
+
+/* ---------- Démarrage ---------- */
+$('date').value=iso(new Date());
+load();renderCats();fillSettings();render();loadVacances();
 </script>
 </body>
 </html>
