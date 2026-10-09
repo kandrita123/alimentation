@@ -63,10 +63,10 @@ button,input,select{font:inherit;color:inherit}
 .head-avg{font-size:clamp(2.6rem,12vw,3.6rem);font-weight:800;letter-spacing:-.03em;font-variation-settings:"opsz" 96;line-height:1.05;margin:2px 0 12px}
 .stripe{display:flex;gap:2px;height:14px;border-radius:5px;overflow:hidden;background:var(--soft)}
 .stripe span{display:block;height:100%}
-.head-legend{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;font-size:.88rem}
-.head-legend li{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:7px;min-width:0}
-.head-legend li span{min-width:0;color:var(--muted)}
-.head-legend li b{grid-column:2;font-weight:700;font-size:1.05rem}
+.head-legend{list-style:none;margin:12px 0 0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:8px 14px;font-size:.86rem}
+.head-legend li{display:grid;grid-template-columns:auto 1fr auto;align-items:center;column-gap:6px;min-width:0}
+.head-legend li span{min-width:0;color:var(--muted);line-height:1.2}
+.head-legend li b{font-weight:700;white-space:nowrap;text-align:right}
 .tabs{display:grid;grid-template-columns:repeat(5,1fr);margin:0 0 18px;border-bottom:1px solid var(--line)}
 .tabs button{background:none;border:0;padding:12px 2px;cursor:pointer;color:var(--muted);font-weight:500;font-size:.9rem;border-bottom:3px solid transparent;margin-bottom:-1px}
 .tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
@@ -267,7 +267,7 @@ const CATS = [
   {id:'livraison', label:'Deliveroo',              group:'dehors', button:true, hint:'Repas livrés (Deliveroo ou autre), et repas achetés tout prêts un jour où vous n\'êtes pas à Saint-Denis.'},
   {id:'recharge',  label:'Recharge cantine',       group:'dehors', button:true, hint:'Chaque recharge de votre carte de cantine, à sa date. Elle compte comme dépense du mois où vous la faites.'},
   {id:'midi',      label:'Midi au travail',        group:'dehors', button:true, hint:'Un jour à Saint-Denis sans cantine : sandwich, restaurant, repas apporté (0 €). Une saisie par jour.'},
-  {id:'ecole',     label:'Cantine Raphaëlle',      group:'dehors', button:false},
+  {id:'ecole',     label:'Midi Raphaëlle',      group:'dehors', button:false},
 ];
 const CAT_ALIASES = {'drive monoprix':'drive','livraison monoprix':'drive','livraison / à emporter':'livraison','livraison de repas':'livraison','mes déjeuners':'midi','ma cantine':'midi'};
 const isRechargeNote = n => /recharge/i.test(n||'');
@@ -425,8 +425,8 @@ function renderHead(months){
     {label:'Magasin',ids:['magasin'],color:'magasin'},
     {label:'Autre',ids:['autre'],color:'autre'},
     {label:'Deliveroo',ids:['livraison'],color:'livraison'},
-    {label:'Repas midi moi',ids:['recharge','midi'],color:'recharge'},
-    {label:'Cantine Raphaëlle',ids:['ecole'],color:'ecole'},
+    {label:'Midi moi',ids:['recharge','midi'],color:'recharge'},
+    {label:'Midi Raphaëlle',ids:['ecole'],color:'ecole'},
   ].map(g=>({...g,v:g.ids.reduce((a,id)=>a+(cats[id]||0),0)}));
   bar.innerHTML='';
   for(const g of groups){
@@ -437,7 +437,7 @@ function renderHead(months){
   for(const g of groups){
     const li=document.createElement('li');
     li.innerHTML=`<i class="dot" style="background:${colorVar(g.color)}"></i><span></span><b></b>`;
-    li.querySelector('span').textContent=g.label;li.querySelector('b').textContent=eur.format(g.v);
+    li.querySelector('span').textContent=g.label;li.querySelector('b').textContent=Math.round(g.v/tot*100)+' %';li.title=eur.format(g.v)+' par mois';
     lg.appendChild(li);
   }
 }
@@ -610,10 +610,12 @@ function renderBilan(months){
   else{
     const add=(v,l,wide)=>{const d=document.createElement('div');d.className='stat'+(wide?' wide':'');d.innerHTML='<b></b><span></span>';d.querySelector('b').textContent=v;d.querySelector('span').textContent=l;st.appendChild(d)};
     add(eur.format(avg),`Moyenne par mois, sur ${used.length} mois retenu${used.length>1?'s':''}`,true);
-    add(eur.format(maison/used.length),'Courses maison / mois');
-    add(eur.format(sumCats(['livraison'])/used.length),'Livraison et à emporter / mois');
-    add(eur.format(midis/used.length),'Mes midis : recharges et midis au travail / mois');
-    add(eur.format(fille/used.length),'Cantine Raphaëlle / mois');
+    add(eur.format(sumCats(['drive'])/used.length),'Monoprix / mois');
+    add(eur.format(sumCats(['magasin'])/used.length),'Magasin / mois');
+    add(eur.format(sumCats(['autre'])/used.length),'Autre / mois');
+    add(eur.format(sumCats(['livraison'])/used.length),'Deliveroo / mois');
+    add(eur.format(midis/used.length),'Midi moi / mois (cantine et midis au travail)');
+    add(eur.format(fille/used.length),'Midi Raphaëlle / mois');
     const typed=t=>used.filter(m=>monthCal(m)?.type===t);
     const avgOf=l=>l.length?l.reduce((a,m)=>a+(months[m]?.total||0),0)/l.length:null;
     const sc=typed('scolaire'),va=typed('vacances'),aS=avgOf(sc),aV=avgOf(va);
@@ -740,7 +742,7 @@ $('importFile').addEventListener('change',async ev=>{
       if(catTxt==='solde carte cantine'){state.settings.solde={montant:parseAmount(cell(r,'montant'))||0,date};other++;continue}
       if(catTxt==='jours sur site'||catTxt==='jours à saint-denis'){state.settings.work[ym]={site:parseInt(cell(r,'jours'),10)||0};other++;continue}
       if(catTxt==='repas cantine'){state.settings.work[ym]={site:parseInt(cell(r,'note'),10)||0};other++;continue}
-      if(catTxt==='cantine raphaëlle'||catTxt==='repas école de ma fille'){
+      if(catTxt==='cantine raphaëlle'||catTxt==='midi raphaëlle'||catTxt==='repas école de ma fille'){
         const mt=parseAmount(cell(r,'montant'))||0;
         const rp=parseInt(cell(r,'jours'),10)||parseInt((cell(r,'note').match(/(\d+)\s*(j|repas)/)||[])[1]||'0',10);
         const prev=touchedFille.has(ym)?state.settings.fille[ym]:{montant:0,repas:0};
