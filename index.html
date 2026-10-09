@@ -138,6 +138,9 @@ legend,.field-label{font-weight:500;margin-bottom:8px;display:block;padding:0}
 details{margin-top:26px;border-top:1px solid var(--line);padding-top:12px}
 summary{cursor:pointer;font-weight:500;padding:6px 0}
 .settings-grid{display:grid;grid-template-columns:1fr 7em;gap:10px 12px;align-items:center;margin:12px 0 18px}
+.months .m small{display:block;color:var(--muted);font-size:.8rem;text-transform:none}
+.days{display:flex;flex-wrap:wrap;gap:6px;grid-column:1/-1}
+.days label{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
 .status{color:var(--muted);font-size:.85rem;margin-top:22px}
 .toast{
   position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
@@ -158,6 +161,7 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
     </div>
     <div class="total" id="monthTotal">0,00 €</div>
     <p class="total-sub" id="monthSub"></p>
+    <p class="total-sub" id="schoolSub" hidden></p>
     <div class="bar" id="monthBar" role="img"></div>
     <ul class="legend" id="monthLegend"></ul>
   </header>
@@ -239,11 +243,17 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
         <input class="input" id="r-internat" inputmode="decimal">
         <label for="r-demipension">Demi-pension (€ / repas)</label>
         <input class="input" id="r-demipension" inputmode="decimal">
+        <label for="demiFrom">Demi-pension à partir du</label>
+        <input class="input" id="demiFrom" type="date">
+        <span>Jours de cantine de ma fille</span>
+        <span></span>
+        <div class="days" id="schoolDays"></div>
       </div>
-      <button class="secondary" id="saveRates">Enregistrer les tarifs</button>
+      <button class="secondary" id="saveRates">Enregistrer les réglages</button>
       <button class="secondary" id="exportBtn">Exporter en CSV</button>
       <button class="secondary" id="importBtn">Importer un CSV</button>
       <input type="file" id="importFile" accept=".csv,text/csv,text/plain" hidden>
+      <button class="secondary" id="clearBtn">Tout effacer</button>
     </details>
   </section>
 
@@ -260,7 +270,8 @@ const CATS = [
   {id:'ecole',     label:'Repas école de ma fille', group:'dehors', rates:['internat','demipension']},
 ];
 const RATE_LABELS = {cantine:'Ma cantine', internat:'Internat', demipension:'Demi-pension'};
-const DEFAULTS = {rates:{cantine:8, internat:13.5, demipension:7}, excluded:[]};
+const DEFAULTS = {rates:{cantine:8, internat:13.4, demipension:7}, excluded:[], demiFrom:'2026-11-02', schoolDays:[1,2,4,5]};
+const WD = [[1,'lun.'],[2,'mar.'],[3,'mer.'],[4,'jeu.'],[5,'ven.']];
 const catById = Object.fromEntries(CATS.map(c=>[c.id,c]));
 const eur = new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'});
 const $ = id => document.getElementById(id);
@@ -281,6 +292,56 @@ function parseAmount(s){const v=parseFloat(String(s).replace(/\s/g,'').replace('
 function fmtNum(v){return String(v).replace('.',',')}
 
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove('show'),1800)}
+
+/* ---------- Calendrier scolaire (vacances.csv) ---------- */
+let holidays=[];
+function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function parseVacances(text){
+  const isD=v=>/^\d{4}-\d{2}-\d{2}$/.test(v||'');
+  return text.split(/\r?\n/).map(l=>l.trim()).filter(l=>l&&!l.startsWith('#'))
+    .map(l=>l.split(';').map(x=>x.trim().replace(/^"|"$/g,'')))
+    .filter(c=>isD(c[0]))
+    .map(c=>({debut:c[0],reprise:isD(c[1])?c[1]:c[0].slice(0,4)+'-09-01',nom:c[2]||''}));
+}
+async function loadVacances(){
+  let text=null;
+  try{const r=await fetch('vacances.csv',{cache:'no-cache'});if(r.ok){text=await r.text();try{localStorage.setItem('alim-vacances',text)}catch(_){}}}catch(_){}
+  if(!text){try{text=localStorage.getItem('alim-vacances')}catch(_){}}
+  holidays=text?parseVacances(text):[];
+  render();
+}
+function easter(y){
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+  h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+  mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;
+  return new Date(y,mo-1,da);
+}
+const ferieCache={};
+function feries(y){
+  if(ferieCache[y]) return ferieCache[y];
+  const e=easter(y),plus=n=>{const x=new Date(e);x.setDate(x.getDate()+n);return iso(x)};
+  return ferieCache[y]=new Set([y+'-01-01',y+'-05-01',y+'-05-08',y+'-07-14',y+'-08-15',y+'-11-01',y+'-11-11',y+'-12-25',plus(1),plus(39),plus(50)]);
+}
+const isVacation=d=>holidays.some(h=>d>=h.debut&&d<h.reprise);
+function calendarKnown(ym){
+  if(!holidays.length) return false;
+  const min=holidays.reduce((a,h)=>h.debut<a?h.debut:a,'9999'),max=holidays.reduce((a,h)=>h.reprise>a?h.reprise:a,'0000');
+  return ym>=min.slice(0,7)&&ym<=max.slice(0,7);
+}
+/* jours ouvrés du mois : classe / vacances, et repas de demi-pension attendus */
+function monthCal(ym){
+  if(!calendarKnown(ym)) return null;
+  const [y,m]=ym.split('-').map(Number),n=new Date(y,m,0).getDate();
+  const sd=new Set(state.settings.schoolDays||DEFAULTS.schoolDays);
+  let classe=0,vac=0,repas=0;
+  for(let d=1;d<=n;d++){
+    const dt=new Date(y,m-1,d),wd=dt.getDay(),s=iso(dt);
+    if(wd===0||wd===6||feries(y).has(s)) continue;
+    if(isVacation(s)) vac++;
+    else{classe++; if(sd.has(wd)&&s>=(state.settings.demiFrom||'9999')) repas++}
+  }
+  return {classe,vac,repas,type:vac>=(classe+vac)/2?'vacances':'scolaire'};
+}
 
 /* ---------- Stockage ---------- */
 function loadLocal(){
@@ -371,6 +432,12 @@ function render(){
   $('monthTotal').textContent=eur.format(cur.total);
   const n=state.entries.filter(e=>(e.date||'').startsWith(state.month)).length;
   $('monthSub').textContent = n ? `${n} dépense${n>1?'s':''} saisie${n>1?'s':''}` : 'Aucune dépense saisie ce mois-ci';
+  const cal=monthCal(state.month),ss=$('schoolSub');
+  if(cal){
+    let t=`${cal.classe} jour${cal.classe>1?'s':''} de classe, ${cal.vac} de vacances.`;
+    if(cal.repas) t+=` Demi-pension attendue : ${cal.repas} repas, ${eur.format(cal.repas*state.settings.rates.demipension)}.`;
+    ss.textContent=t;ss.hidden=false;
+  }else ss.hidden=true;
   const bar=$('monthBar');
   bar.classList.toggle('empty',!cur.total);
   barSpans(cur.cats,cur.total||1,bar);
@@ -472,7 +539,18 @@ function renderBilan(months){
     add(eur.format(avg),`Moyenne par mois, sur ${used.length} mois retenu${used.length>1?'s':''}`,true);
     add(eur.format(maison/used.length),'Courses maison / mois (drive + magasin)');
     add(eur.format(dehors/used.length),'Repas dehors / mois (livraison, cantines, école)');
-    add(eur.format(avg*12),'Projection sur 12 mois');
+    const typed=t=>used.filter(m=>monthCal(m)?.type===t);
+    const sc=typed('scolaire'),va=typed('vacances');
+    const avgOf=l=>l.length?l.reduce((a,m)=>a+(months[m]?.total||0),0)/l.length:null;
+    const aS=avgOf(sc),aV=avgOf(va);
+    if(aS!=null) add(eur.format(aS),`Mois scolaire moyen (${sc.length} mois)`);
+    if(aV!=null) add(eur.format(aV),`Mois de vacances moyen (${va.length} mois)`);
+    let proj=0,ok=true;
+    for(let i=0,m=now;i<12;i++,m=shiftMonth(m,1)){
+      const c=monthCal(m); if(!c){ok=false;break}
+      proj+=(c.type==='vacances'?(aV??avg):(aS??avg));
+    }
+    add(eur.format(ok?proj:avg*12),ok?'Projection sur les 12 prochains mois, selon le calendrier scolaire':'Projection sur 12 mois (calendrier scolaire incomplet)');
     add(tot?Math.round(dehors/tot*100)+' %':'–','Part des repas dehors');
   }
   const ul=$('months');ul.innerHTML='';
@@ -482,8 +560,10 @@ function renderBilan(months){
     const li=document.createElement('li');
     const b=document.createElement('button');
     b.setAttribute('aria-pressed',excl.has(m)?'true':'false');
-    b.innerHTML=`<span class="m"></span><span class="mini"></span><span class="v"></span>`;
-    b.querySelector('.m').textContent=monthLabel(m);
+    b.innerHTML=`<span class="m"><span></span><small></small></span><span class="mini"></span><span class="v"></span>`;
+    b.querySelector('.m span').textContent=monthLabel(m);
+    const mc=monthCal(m);
+    b.querySelector('.m small').textContent=mc?(mc.type==='vacances'?'surtout vacances':`${mc.classe} j. de classe`):'';
     const mini=b.querySelector('.mini');mini.style.width=(d.total/max*100)+'%';barSpans(d.cats,d.total||1,mini);
     b.querySelector('.v').textContent=eur.format(d.total);
     b.setAttribute('aria-label',`${monthLabel(m)}, ${eur.format(d.total)}${excl.has(m)?', exclu de la moyenne':''}`);
@@ -499,6 +579,13 @@ function renderBilan(months){
 
 function fillRates(){
   for(const k of ['cantine','internat','demipension']) $('r-'+k).value=fmtNum(state.settings.rates[k]);
+  $('demiFrom').value=state.settings.demiFrom||'';
+  const box=$('schoolDays');box.innerHTML='';
+  const sd=new Set(state.settings.schoolDays||DEFAULTS.schoolDays);
+  for(const [n,l] of WD){
+    const lab=document.createElement('label');
+    lab.innerHTML=`<input type="checkbox" value="${n}"${sd.has(n)?' checked':''}>`;lab.append(l);box.appendChild(lab);
+  }
   if(catById[state.cat].rates) updatePerDay();
 }
 
@@ -544,7 +631,9 @@ $('saveRates').addEventListener('click',async()=>{
     r[k]=v;
   }
   state.settings.rates=r;
-  try{await saveSettings();updatePerDay();toast('Tarifs enregistrés')}catch(_){toast('Enregistrement impossible')}
+  state.settings.demiFrom=$('demiFrom').value||'';
+  state.settings.schoolDays=[...$('schoolDays').querySelectorAll('input:checked')].map(i=>+i.value);
+  try{await saveSettings();updatePerDay();toast('Réglages enregistrés')}catch(_){toast('Enregistrement impossible')}
 });
 
 $('exportBtn').addEventListener('click',async()=>{
@@ -562,6 +651,17 @@ $('exportBtn').addEventListener('click',async()=>{
   const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
   const a=document.createElement('a');a.href=url;a.download=filename;document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),5000);
+});
+
+$('clearBtn').addEventListener('click',async()=>{
+  const n=state.entries.length;
+  if(!n){toast('Aucune dépense à effacer');return}
+  if(!confirm('Effacer les '+n+' dépenses ? Pensez à exporter une sauvegarde avant. Les tarifs sont conservés.')) return;
+  try{
+    if(state.mode==='db'){for(const e of [...state.entries]) await remote.entries.doc(e.id).delete()}
+    else{state.entries=[];saveLocal();render()}
+    toast('Toutes les dépenses ont été effacées');
+  }catch(_){toast('Effacement incomplet, réessayez')}
 });
 
 /* ---------- Import CSV (même format que l'export) ---------- */
@@ -616,6 +716,7 @@ $('importFile').addEventListener('change',async ev=>{
 $('date').value=todayISO();
 renderCats();updatePerDay();fillRates();
 init();
+loadVacances();
 </script>
 </body>
 </html>
