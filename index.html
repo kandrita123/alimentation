@@ -137,6 +137,8 @@ input[type="date"]{-webkit-appearance:none;appearance:none;display:block;min-wid
 .months .v{font-weight:700;min-width:5.5em;text-align:right}
 .months button[aria-pressed="true"]{opacity:.45}
 .months button[aria-pressed="true"] .v{text-decoration:line-through}
+.block-title{font-size:1.35rem;font-weight:800;letter-spacing:-.01em;margin:34px 0 14px;padding-top:18px;border-top:2px solid var(--line)}
+#tab-bilan .block-title:first-child{margin-top:0;padding-top:0;border-top:0}
 .section-title{font-size:1.1rem;font-weight:700;margin:26px 0 10px}
 details{margin-top:26px;border-top:1px solid var(--line);padding-top:12px}
 summary{cursor:pointer;font-weight:500;padding:6px 0}
@@ -152,7 +154,7 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
 <body>
 <main>
   <header class="app-head">
-    <h1>Mon poste alimentation</h1>
+    <h1 id="headTitle">Mon poste alimentation</h1>
     <p class="head-sub" id="headSub"></p>
     <div class="head-avg" id="headAvg"></div>
     <div class="stripe" id="headBar" role="img"></div>
@@ -239,8 +241,7 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
   </section>
 
   <section id="tab-hyg" hidden>
-    <p class="hint">Achats d'hygiène, d'entretien et de beauté, suivis à part : ils ne comptent pas dans le budget alimentation. Moyennes calculées sur les mois terminés, à partir de la première saisie de chaque catégorie.</p>
-    <div class="stats" id="hygStats"></div>
+    <p class="hint">Achats d'hygiène, d'entretien et de beauté, suivis à part : ils ne comptent pas dans le budget alimentation. Leurs moyennes sont dans le Bilan.</p>
     <h2 class="section-title">Mois par mois</h2>
     <p class="hint" style="margin:0 0 8px">Touchez un mois pour voir le détail de ses achats.</p>
     <ul class="hyg-months" id="hygMonths"></ul>
@@ -249,6 +250,7 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
   </section>
 
   <section id="tab-bilan" hidden>
+    <h2 class="block-title">Alimentation</h2>
     <div class="row one">
       <div>
         <label class="field-label" for="period">Période</label>
@@ -264,6 +266,10 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
     <h2 class="section-title">Par mois</h2>
     <p class="hint" style="margin:0 0 8px">Touchez un mois pour l'exclure de la moyenne (vacances, mois incomplet).</p>
     <ul class="months" id="months"></ul>
+
+    <h2 class="block-title">Hygiène et entretien</h2>
+    <p class="hint">Moyennes sur les mois terminés, depuis la première saisie de chaque catégorie. Le détail mois par mois est dans l'onglet Hygiène / entretien.</p>
+    <div class="stats" id="hygStats"></div>
 
     <details>
       <summary>Réglages et sauvegarde</summary>
@@ -448,6 +454,8 @@ function monthRange(){
 
 /* ---------- Rendu ---------- */
 function renderHead(months){
+  $('headTitle').textContent=state.tab==='hyg'?'Mon budget courant':'Mon poste alimentation';
+  if(state.tab==='hyg') return renderHeadFoyer(months);
   const now=ymOf(new Date()),excl=new Set(state.settings.excluded||[]);
   const used=Object.keys(months).filter(m=>m<now&&!excl.has(m)&&months[m].total>0).sort();
   const sub=$('headSub'),bar=$('headBar'),lg=$('headLegend');lg.innerHTML='';
@@ -474,6 +482,31 @@ function renderHead(months){
     const li=document.createElement('li');
     li.innerHTML=`<i class="dot" style="background:${colorVar(g.color)}"></i><span></span><b></b>`;
     li.querySelector('span').textContent=g.label;li.querySelector('b').textContent=Math.round(g.v/tot*100)+' %';li.title=eur.format(g.v)+' par mois';
+    lg.appendChild(li);
+  }
+}
+
+function renderHeadFoyer(months){
+  const now=ymOf(new Date()),excl=new Set(state.settings.excluded||[]);
+  const used=Object.keys(months).filter(m=>m<now&&!excl.has(m)&&months[m].total>0).sort();
+  const sub=$('headSub'),bar=$('headBar'),lg=$('headLegend');lg.innerHTML='';bar.innerHTML='';
+  const alim=used.length?used.reduce((a,m)=>a+months[m].total,0)/used.length:null;
+  const h=hygAverages();
+  const groups=[{label:'Alimentation',v:alim,color:'drive'},...HYG.map(id=>({label:catById[id].label,v:h[id]?.avg??null,color:id}))];
+  const known=groups.filter(g=>g.v!=null);
+  if(!known.length){sub.textContent='Les moyennes apparaîtront après un premier mois terminé.';$('headAvg').textContent='';return}
+  const tot=known.reduce((a,g)=>a+g.v,0);
+  sub.textContent=`Budget courant du foyer par mois : alimentation sur ${used.length} mois complet${used.length>1?'s':''}, hygiène et entretien depuis leur première saisie`;
+  $('headAvg').textContent=eur.format(tot);
+  for(const g of known){const sp=document.createElement('span');sp.style.width=(g.v/tot*100)+'%';sp.style.background=colorVar(g.color);bar.appendChild(sp)}
+  bar.setAttribute('aria-label',known.map(g=>`${g.label} ${eur.format(g.v)} par mois`).join(', '));
+  for(const g of groups){
+    const li=document.createElement('li');
+    li.innerHTML=`<i class="dot" style="background:${colorVar(g.color)}"></i><span></span><b></b>`;
+    li.querySelector('span').textContent=g.label;
+    const pct=g.v!=null&&tot?g.v/tot*100:null;
+    li.querySelector('b').textContent=pct==null?'–':(pct>0&&pct<1?'< 1 %':Math.round(pct)+' %');
+    if(g.v!=null) li.title=eur.format(g.v)+' par mois';
     lg.appendChild(li);
   }
 }
@@ -566,6 +599,19 @@ function renderList(){
   renderEntries(box,items);
 }
 
+function hygAverages(){
+  const now=ymOf(new Date()),lastDone=shiftMonth(now,-1);
+  const hyg=state.entries.filter(isHyg);
+  const mb=(a,b)=>{const [y1,m1]=a.split('-').map(Number),[y2,m2]=b.split('-').map(Number);return (y2-y1)*12+(m2-m1)+1};
+  const out={};
+  for(const id of HYG){
+    const first=hyg.filter(e=>e.cat===id).map(e=>e.date.slice(0,7)).sort()[0];
+    if(!first||first>lastDone){out[id]=null;continue}
+    const n=mb(first,lastDone);
+    out[id]={avg:hyg.filter(e=>e.cat===id&&e.date.slice(0,7)<=lastDone).reduce((a,e)=>a+e.amount,0)/n,n,first};
+  }
+  return out;
+}
 function renderHyg(){
   const now=ymOf(new Date()),lastDone=shiftMonth(now,-1);
   const hyg=state.entries.filter(isHyg);
@@ -688,7 +734,7 @@ function renderBilan(months){
     for(let m=start;m<=now;m=shiftMonth(m,1)) list.push(m);
   }
   const excl=new Set(state.settings.excluded||[]);
-  const used=list.filter(m=>!excl.has(m));
+  const used=list.filter(m=>!excl.has(m)&&m<now);
   const sumCats=ids=>used.reduce((a,m)=>a+ids.reduce((b,id)=>b+((months[m]?.cats[id])||0),0),0);
   const tot=used.reduce((a,m)=>a+(months[m]?.total||0),0);
   const avg=used.length?tot/used.length:0;
@@ -699,7 +745,7 @@ function renderBilan(months){
   if(!used.length){st.innerHTML='<p class="empty-msg stat wide">Pas encore assez de données sur cette période.</p>'}
   else{
     const add=(v,l,wide)=>{const d=document.createElement('div');d.className='stat'+(wide?' wide':'');d.innerHTML='<b></b><span></span>';d.querySelector('b').textContent=v;d.querySelector('span').textContent=l;st.appendChild(d)};
-    add(eur.format(avg),`Moyenne par mois, sur ${used.length} mois retenu${used.length>1?'s':''}`,true);
+    add(eur.format(avg),`Moyenne par mois, sur ${used.length} mois terminé${used.length>1?'s':''} retenu${used.length>1?'s':''}`,true);
     add(eur.format(sumCats(['drive'])/used.length),'Monoprix / mois');
     add(eur.format(sumCats(['magasin'])/used.length),'Magasin / mois');
     add(eur.format(sumCats(['autre'])/used.length),'Autre / mois');
@@ -751,6 +797,7 @@ document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',
   state.tab=b.dataset.tab;
   document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b?'true':'false'));
   for(const t of ['saisie','liste','midis','fille','hyg','bilan']) $('tab-'+t).hidden=t!==state.tab;
+  renderHead(byMonth());
 }));
 $('period').addEventListener('change',render);
 document.querySelectorAll('#noteChips .chip').forEach(ch=>ch.addEventListener('click',()=>{$('note').value=ch.textContent;}));
