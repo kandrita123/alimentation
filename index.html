@@ -145,6 +145,32 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
 .settings-grid{display:grid;grid-template-columns:1fr 7em;gap:10px 12px;align-items:center;margin:12px 0 18px}
 .days{display:flex;flex-wrap:wrap;gap:6px;grid-column:1/-1}
 .days label{display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:var(--surface)}
+:root{--d-cantine:#4A6FA5;--d-midi:#D46A3C;--d-tele:#E3B341;--d-off:#9AA39D}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--d-cantine:#7C9DD0;--d-midi:#E8895E;--d-tele:#E8C55A;--d-off:#4B5651}}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-nav h2{font-size:1.15rem;margin:0;text-transform:capitalize}
+.cal-nav button{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);font-size:20px;cursor:pointer}
+.cal-nav button:disabled{opacity:.3;cursor:default}
+.cal-legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.82rem;color:var(--muted);margin-bottom:10px}
+.cal-legend span{display:inline-flex;align-items:center;gap:5px}
+.cal-legend i,.opt i{width:12px;height:12px;border-radius:4px;display:inline-block}
+.cal{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.cal .h{text-align:center;font-size:.8rem;color:var(--muted)}
+.cal button{aspect-ratio:1/1;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:700;font-size:1rem;cursor:pointer;color:var(--ink);padding:0}
+.cal button.future{border-style:dashed;color:var(--muted)}
+.cal button.today{box-shadow:inset 0 0 0 2px var(--accent)}
+.cal button.s-cantine{background:var(--d-cantine);border-color:transparent;color:#fff}
+.cal button.s-midi{background:var(--d-midi);border-color:transparent;color:#fff}
+.cal button.s-tele{background:var(--d-tele);border-color:transparent;color:#1C2420}
+.cal button.s-off{background:var(--d-off);border-color:transparent;color:#fff}
+.cal .ferie{aspect-ratio:1/1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--muted);font-size:.7rem;background:repeating-linear-gradient(45deg,transparent 0 6px,var(--soft) 6px 12px)}
+.cal .ferie b{font-size:1rem}
+.cal-count{font-size:.92rem;margin:12px 0 6px}
+.sheet-back{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.sheet{background:var(--bg);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+.sheet h3{margin:0 0 12px;text-transform:capitalize}
+.opt{display:flex;align-items:center;gap:10px;width:100%;text-align:left;padding:13px 12px;margin-bottom:6px;border-radius:12px;border:1px solid var(--line);background:var(--surface);cursor:pointer;font-weight:500}
+.midi-box{margin:4px 0 12px}
 .status{color:var(--muted);font-size:.85rem;margin-top:22px}
 .toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
@@ -217,7 +243,20 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
   </section>
 
   <section id="tab-midis" hidden>
-    <p class="hint">Indiquez vos jours à Saint-Denis chaque mois. Les recharges de carte et les « Midi au travail » se saisissent dans Saisir. Repas à la cantine = jours à Saint-Denis moins vos midis au travail.</p>
+    <div class="cal-nav">
+      <button id="calPrev" aria-label="Mois précédent">‹</button>
+      <h2 id="calTitle"></h2>
+      <button id="calNext" aria-label="Mois suivant">›</button>
+    </div>
+    <div class="cal-legend">
+      <span><i style="background:var(--d-cantine)"></i>Cantine</span>
+      <span><i style="background:var(--d-midi)"></i>Sandwich ou resto</span>
+      <span><i style="background:var(--d-tele)"></i>Télétravail</span>
+      <span><i style="background:var(--d-off)"></i>Congé, déplacement</span>
+    </div>
+    <div class="cal" id="cal"></div>
+    <p class="cal-count" id="calCount"></p>
+    <p class="hint">Touchez un jour pour indiquer votre midi. Le mois précédent reste modifiable pendant tout le mois suivant. Les recharges de carte se saisissent dans Saisir.</p>
     <div class="stats" id="cardStats"></div>
     <div class="row" style="align-items:end">
       <div>
@@ -230,9 +269,28 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
       </div>
     </div>
     <p class="hint" style="margin-top:-8px">Le solde affine le prix moyen : sans lui, l'argent encore sur la carte est compté comme déjà mangé. Mettez-le à jour quand vous le voyez, après avoir saisi vos jours du mois.</p>
+    <h2 class="section-title">Mois par mois</h2>
     <div class="grid-head g2"><span>Mois</span><span>Jours à Saint-Denis</span></div>
     <ul class="grid" id="midis"></ul>
   </section>
+  <div class="sheet-back" id="sheetBack" hidden>
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+      <h3 id="sheetTitle"></h3>
+      <button class="opt" data-s="cantine"><i style="background:var(--d-cantine)"></i>À Saint-Denis, cantine</button>
+      <button class="opt" data-s="midi"><i style="background:var(--d-midi)"></i>À Saint-Denis, sandwich ou restaurant</button>
+      <div class="midi-box" id="midiBox" hidden>
+        <div class="row">
+          <div><label class="field-label" for="midiAmt">Montant (€)</label><input class="input" id="midiAmt" inputmode="decimal"></div>
+          <div><label class="field-label" for="midiNote">Note</label><input class="input" id="midiNote" placeholder="ex. sandwich"></div>
+        </div>
+        <button class="primary" id="midiOk">Enregistrer</button>
+      </div>
+      <button class="opt" data-s="tele"><i style="background:var(--d-tele)"></i>Télétravail</button>
+      <button class="opt" data-s="off"><i style="background:var(--d-off)"></i>Congé, déplacement, à ne pas compter</button>
+      <button class="opt" data-s="">Effacer</button>
+      <button class="secondary" id="sheetClose" style="width:100%;margin:8px 0 0">Annuler</button>
+    </div>
+  </div>
 
   <section id="tab-fille" hidden>
     <p class="hint">Recopiez chaque facture de cantine : le total TTC et le nombre de repas facturés (réservations comprises), dans le mois qu'elle couvre.</p>
@@ -311,7 +369,7 @@ const CATS = [
 ];
 const CAT_ALIASES = {'drive monoprix':'drive','livraison monoprix':'drive','livraison / à emporter':'livraison','livraison de repas':'livraison','mes déjeuners':'midi','ma cantine':'midi'};
 const isRechargeNote = n => /recharge/i.test(n||'');
-const DEFAULTS = {rates:{demipension:7}, excluded:[], demiFrom:'2026-11-02', schoolDays:[1,2,4,5], work:{}, fille:{}, solde:null};
+const DEFAULTS = {rates:{demipension:7}, excluded:[], demiFrom:'2026-11-02', schoolDays:[1,2,4,5], work:{}, fille:{}, solde:null, days:{}};
 const WD = [[1,'lun.'],[2,'mar.'],[3,'mer.'],[4,'jeu.'],[5,'ven.']];
 const catById = Object.fromEntries(CATS.map(c=>[c.id,c]));
 const HYG = CATS.filter(c=>c.group==='hygiene').map(c=>c.id);
@@ -337,7 +395,7 @@ function load(){
     const e=JSON.parse(localStorage.getItem('alim-entries')||'[]');
     const s=JSON.parse(localStorage.getItem('alim-settings')||'null');
     state.entries=Array.isArray(e)?e:[];
-    if(s) state.settings={...structuredClone(DEFAULTS),...s,rates:{...DEFAULTS.rates,...(s.rates||{})},work:s.work||{},fille:s.fille||{}};
+    if(s) state.settings={...structuredClone(DEFAULTS),...s,rates:{...DEFAULTS.rates,...(s.rates||{})},work:s.work||{},fille:s.fille||{},days:s.days||{}};
   }catch(_){}
   migrate();
 }
@@ -410,17 +468,28 @@ function monthCal(ym){
 }
 
 /* ---------- Calculs ---------- */
+const calMonths=()=>[...new Set(Object.keys(state.settings.days).map(d=>d.slice(0,7)))];
+const midiDates=ym=>new Set(state.entries.filter(e=>e.cat==='midi'&&e.date.startsWith(ym)).map(e=>e.date));
+function dayState(d){
+  if(state.entries.some(e=>e.cat==='midi'&&e.date===d)) return 'midi';
+  return state.settings.days[d]||'';
+}
 function lunch(ym){
-  const site=state.settings.work[ym]?.site||0;
   const inMonth=c=>state.entries.filter(e=>e.cat===c&&e.date.startsWith(ym));
   const midis=inMonth('midi');
   const midiSum=round2(midis.reduce((a,e)=>a+e.amount,0));
   const recharges=round2(inMonth('recharge').reduce((a,e)=>a+e.amount,0));
+  if(calMonths().includes(ym)){
+    const cantine=Object.entries(state.settings.days).filter(([d,v])=>d.startsWith(ym)&&v==='cantine'&&!midiDates(ym).has(d)).length;
+    const md=midiDates(ym).size;
+    return {site:cantine+md,midiCount:midis.length,midiSum,recharges,repas:cantine,overflow:false,calendar:true};
+  }
+  const site=state.settings.work[ym]?.site||0;
   return {site,midiCount:midis.length,midiSum,recharges,repas:Math.max(0,site-midis.length),overflow:midis.length>site&&site>0};
 }
 /* bilan cumulé de la carte : prix moyen d'un repas */
 function cardStats(){
-  const months=Object.keys(state.settings.work).sort();
+  const months=[...new Set([...Object.keys(state.settings.work),...calMonths()])].sort();
   let repas=0,site=0,midiSum=0;
   for(const m of months){const l=lunch(m);repas+=l.repas;site+=l.site;midiSum+=l.midiSum}
   const recharges=round2(state.entries.filter(e=>e.cat==='recharge').reduce((a,e)=>a+e.amount,0));
@@ -662,7 +731,57 @@ function numberInput(value,label,decimal,onChange){
   inp.addEventListener('change',()=>{onChange(inp.value);save();render();toast('Enregistré')});
   return inp;
 }
+const calState={month:ymOf(new Date())};
+function editableMonths(){const now=ymOf(new Date());return [shiftMonth(now,-1),now]}
+function renderCal(){
+  const ym=calState.month,[y,m]=ym.split('-').map(Number),n=new Date(y,m,0).getDate(),today=iso(new Date());
+  const ed=editableMonths();
+  $('calTitle').textContent=monthLabel(ym);
+  $('calPrev').disabled=ym<=ed[0];$('calNext').disabled=ym>=ed[1];
+  const box=$('cal');box.innerHTML='';
+  for(const h of ['lun.','mar.','mer.','jeu.','ven.']){const d=document.createElement('div');d.className='h';d.textContent=h;box.appendChild(d)}
+  const first=new Date(y,m-1,1).getDay();
+  let lead=first===0||first===6?0:first-1;
+  for(let i=0;i<lead;i++) box.appendChild(document.createElement('div'));
+  const cnt={cantine:0,midi:0,tele:0,off:0,vide:0};
+  for(let d=1;d<=n;d++){
+    const dt=new Date(y,m-1,d),wd=dt.getDay(),key=iso(dt);
+    if(wd===0||wd===6) continue;
+    if(feries(y).has(key)){const f=document.createElement('div');f.className='ferie';f.innerHTML=`<b>${d}</b>férié`;box.appendChild(f);continue}
+    const st=dayState(key),b=document.createElement('button');
+    b.textContent=d;b.className=(st?'s-'+st:'')+(key>today?' future':'')+(key===today?' today':'');
+    b.setAttribute('aria-label',`${dt.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}, ${({cantine:'cantine',midi:'sandwich ou restaurant',tele:'télétravail',off:'congé ou déplacement'})[st]||'non renseigné'}`);
+    b.addEventListener('click',()=>openSheet(key));
+    box.appendChild(b);
+    if(st) cnt[st]++; else if(key<=today) cnt.vide++;
+  }
+  const site=cnt.cantine+cnt.midi;
+  $('calCount').innerHTML='';
+  const t=`${site} jour${site>1?'s':''} à Saint-Denis (${cnt.cantine} cantine, ${cnt.midi} sandwich ou resto), ${cnt.tele} télétravail, ${cnt.off} congé ou déplacement`+(cnt.vide?`. ${cnt.vide} jour${cnt.vide>1?'s':''} passé${cnt.vide>1?'s':''} non renseigné${cnt.vide>1?'s':''}.`:'.');
+  $('calCount').textContent=t;
+}
+let sheetDay=null;
+function openSheet(day){
+  sheetDay=day;
+  $('sheetTitle').textContent=new Date(day+'T12:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  $('midiBox').hidden=true;
+  const ex=state.entries.find(e=>e.cat==='midi'&&e.date===day);
+  $('midiAmt').value=ex?fmtNum(ex.amount.toFixed(2)):'9,00';$('midiNote').value=ex?.note||'';
+  $('sheetBack').hidden=false;
+}
+function closeSheet(){$('sheetBack').hidden=true;sheetDay=null}
+function setDay(day,st){
+  const ex=state.entries.filter(e=>e.cat==='midi'&&e.date===day);
+  if(ex.length&&st!=='midi'){
+    if(!confirm(`Ce jour a un midi au travail de ${eur.format(ex.reduce((a,e)=>a+e.amount,0))}. Le supprimer ?`)) return false;
+    state.entries=state.entries.filter(e=>!(e.cat==='midi'&&e.date===day));
+  }
+  if(st&&st!=='midi') state.settings.days[day]=st; else delete state.settings.days[day];
+  if(st==='midi') state.settings.days[day]='cantine'; // marque le mois comme suivi au calendrier ; le midi l'emporte à l'affichage
+  return true;
+}
 function renderMidis(){
+  renderCal();
   const cs=cardStats(),st=$('cardStats');st.innerHTML='';
   const add=(v,l,wide)=>{const d=document.createElement('div');d.className='stat'+(wide?' wide':'');d.innerHTML='<b></b><span></span>';d.querySelector('b').textContent=v;d.querySelector('span').textContent=l;st.appendChild(d)};
   if(cs.site){
@@ -688,7 +807,8 @@ function renderMidis(){
     }else if(l.recharges) parts.push(`rechargé ${eur.format(l.recharges)}`);
     else if(cal) parts.push(`${cal.ouvres} jours ouvrés`);
     li.querySelector('small').textContent=parts.join(', ');
-    li.appendChild(numberInput(state.settings.work[m]?.site??'','Jours à Saint-Denis en '+monthLabel(m),false,v=>{
+    if(l.calendar){const v=document.createElement('b');v.style.cssText='text-align:center;font-size:1.1rem';v.textContent=l.site;li.appendChild(v)}
+    else li.appendChild(numberInput(state.settings.work[m]?.site??'','Jours à Saint-Denis en '+monthLabel(m),false,v=>{
       const n=parseInt(v,10);
       if(n>=0) state.settings.work[m]={site:n}; else delete state.settings.work[m];
     }));
@@ -809,11 +929,36 @@ function saveSolde(){
 $('solde').addEventListener('change',saveSolde);
 $('soldeDate').addEventListener('change',()=>{if($('solde').value) saveSolde()});
 
+$('calPrev').onclick=()=>{calState.month=shiftMonth(calState.month,-1);renderCal()};
+$('calNext').onclick=()=>{calState.month=shiftMonth(calState.month,1);renderCal()};
+$('sheetClose').onclick=closeSheet;
+$('sheetBack').addEventListener('click',e=>{if(e.target===$('sheetBack')) closeSheet()});
+document.querySelectorAll('.sheet .opt').forEach(b=>b.addEventListener('click',()=>{
+  const st=b.dataset.s;
+  if(st==='midi'){$('midiBox').hidden=false;$('midiAmt').focus();return}
+  if(setDay(sheetDay,st)){save();closeSheet();render()}
+}));
+$('midiOk').addEventListener('click',()=>{
+  const a=parseAmount($('midiAmt').value);
+  if(!(a>=0)){toast('Montant invalide');return}
+  state.entries=state.entries.filter(e=>!(e.cat==='midi'&&e.date===sheetDay));
+  state.entries.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,7),date:sheetDay,cat:'midi',amount:a,note:$('midiNote').value.trim(),createdAt:Date.now()});
+  state.settings.days[sheetDay]='cantine';
+  save();closeSheet();render();toast('Midi enregistré');
+});
+
 $('addBtn').addEventListener('click',()=>{
   const amount=parseAmount($('amount').value),date=$('date').value;
   const zeroOk=state.cat==='midi';
   if(!(amount>0)&&!(zeroOk&&amount===0)){toast(zeroOk?'Indiquez un montant (0 pour un repas apporté)':'Indiquez un montant');$('amount').focus();return}
   if(!date){toast('Indiquez une date');return}
+  if(state.cat==='midi'){
+    const ds=state.settings.days[date];
+    if(ds==='tele'||ds==='off'){
+      if(!confirm(`Ce jour est marqué ${ds==='tele'?'télétravail':'congé ou déplacement'} dans votre calendrier. Le passer à Saint-Denis, sandwich ou restaurant ? (Sinon, annulez et classez ce repas dans Deliveroo.)`)) return;
+      state.settings.days[date]='cantine';
+    }else if(calMonths().includes(date.slice(0,7))) state.settings.days[date]='cantine';
+  }
   state.entries.push({id:'e'+Date.now()+Math.random().toString(36).slice(2,7),date,cat:state.cat,amount,note:$('note').value.trim(),createdAt:Date.now()});
   save();toast('Dépense ajoutée');
   $('amount').value='';$('note').value='';
@@ -837,6 +982,7 @@ $('exportBtn').addEventListener('click',()=>{
     rows.push([e.date,(catById[e.cat]||{label:e.cat}).label,fmtNum(e.amount.toFixed(2)),'','',e.note||'']);
   for(const [ym,w] of Object.entries(state.settings.work).sort()) rows.push([ym+'-01','Jours à Saint-Denis','0',w.site||0,'','']);
   for(const [ym,f] of Object.entries(state.settings.fille).sort()) rows.push([ym+'-01','Cantine Raphaëlle',fmtNum((f.montant||0).toFixed(2)),f.repas||0,'','']);
+  for(const [d,v] of Object.entries(state.settings.days).sort()) rows.push([d,'Planning midi','0','','',v]);
   if(state.settings.solde) rows.push([state.settings.solde.date,'Solde carte cantine',fmtNum(state.settings.solde.montant.toFixed(2)),'','','']);
   const csv='\ufeff'+rows.map(r=>r.map(q).join(';')).join('\n');
   const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
@@ -878,6 +1024,7 @@ $('importFile').addEventListener('change',async ev=>{
     for(const r of rows.slice(1)){
       const date=cell(r,'date'),catTxt=cell(r,'categorie').toLowerCase(),ym=date.slice(0,7);
       if(!/^\d{4}-\d{2}/.test(date)){skipped++;continue}
+      if(catTxt==='planning midi'){const v=cell(r,'note');if(['cantine','tele','off'].includes(v)) state.settings.days[date]=v;other++;continue}
       if(catTxt==='solde carte cantine'){state.settings.solde={montant:parseAmount(cell(r,'montant'))||0,date};other++;continue}
       if(catTxt==='jours sur site'||catTxt==='jours à saint-denis'){state.settings.work[ym]={site:parseInt(cell(r,'jours'),10)||0};other++;continue}
       if(catTxt==='repas cantine'){state.settings.work[ym]={site:parseInt(cell(r,'note'),10)||0};other++;continue}
@@ -905,7 +1052,7 @@ $('importFile').addEventListener('change',async ev=>{
 $('clearBtn').addEventListener('click',()=>{
   if(!state.entries.length&&!Object.keys(state.settings.work).length&&!Object.keys(state.settings.fille).length){toast('Rien à effacer');return}
   if(!confirm('Tout effacer : dépenses, jours à Saint-Denis, solde de carte et factures de Raphaëlle ? Pensez à exporter une sauvegarde avant. Les réglages sont conservés.')) return;
-  state.entries=[];state.settings.work={};state.settings.fille={};state.settings.excluded=[];state.settings.solde=null;
+  state.entries=[];state.settings.work={};state.settings.fille={};state.settings.excluded=[];state.settings.solde=null;state.settings.days={};
   save();render();toast('Données effacées');
 });
 
