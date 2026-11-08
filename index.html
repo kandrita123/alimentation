@@ -268,7 +268,7 @@ summary{cursor:pointer;font-weight:500;padding:6px 0}
         <input class="input" id="soldeDate" type="date">
       </div>
     </div>
-    <p class="hint" style="margin-top:-8px">Le solde affine le prix moyen : sans lui, l'argent encore sur la carte est compté comme déjà mangé. Mettez-le à jour quand vous le voyez, après avoir saisi vos jours du mois.</p>
+    <p class="hint" style="margin-top:-8px">Saisissez le solde lu avant votre repas, avec la date du jour. Le calcul compte les repas des jours précédents et les recharges jusqu'à ce jour inclus.</p>
     <h2 class="section-title">Mois par mois</h2>
     <div class="grid-head g2"><span>Mois</span><span>Jours à Saint-Denis</span></div>
     <ul class="grid" id="midis"></ul>
@@ -489,13 +489,25 @@ function lunch(ym){
 }
 /* bilan cumulé de la carte : prix moyen d'un repas */
 function cardStats(){
+  const sd=state.settings.solde,D=sd?.date||null;
   const months=[...new Set([...Object.keys(state.settings.work),...calMonths()])].sort();
   let repas=0,site=0,midiSum=0;
-  for(const m of months){const l=lunch(m);repas+=l.repas;site+=l.site;midiSum+=l.midiSum}
-  const recharges=round2(state.entries.filter(e=>e.cat==='recharge').reduce((a,e)=>a+e.amount,0));
-  const solde=state.settings.solde;
-  const consomme=round2(recharges-(solde?.montant||0));
-  return {repas,site,midiSum,recharges,solde,consomme,prix:repas?consomme/repas:null,parJour:site?(consomme+midiSum)/site:null};
+  for(const m of months){
+    if(calMonths().includes(m)){
+      const md=midiDates(m);
+      const cant=Object.entries(state.settings.days).filter(([d,v])=>d.startsWith(m)&&v==='cantine'&&!md.has(d)&&(!D||d<D)).length;
+      const mids=state.entries.filter(e=>e.cat==='midi'&&e.date.startsWith(m)&&(!D||e.date<D));
+      repas+=cant;site+=cant+new Set(mids.map(e=>e.date)).size;midiSum+=mids.reduce((a,e)=>a+e.amount,0);
+    }else{
+      if(D&&m>D.slice(0,7)) continue;
+      const l=lunch(m);repas+=l.repas;site+=l.site;midiSum+=l.midiSum;
+    }
+  }
+  const rech=state.entries.filter(e=>e.cat==='recharge');
+  const rechargesAll=round2(rech.reduce((a,e)=>a+e.amount,0));
+  const recharges=round2(rech.filter(e=>!D||e.date<=D).reduce((a,e)=>a+e.amount,0));
+  const consomme=round2(recharges-(sd?.montant||0));
+  return {repas,site,midiSum:round2(midiSum),recharges,rechargesAll,solde:sd,D,consomme,prix:repas?consomme/repas:null,parJour:site?(consomme+midiSum)/site:null};
 }
 function byMonth(){
   const map={};
@@ -785,9 +797,10 @@ function renderMidis(){
   const cs=cardStats(),st=$('cardStats');st.innerHTML='';
   const add=(v,l,wide)=>{const d=document.createElement('div');d.className='stat'+(wide?' wide':'');d.innerHTML='<b></b><span></span>';d.querySelector('b').textContent=v;d.querySelector('span').textContent=l;st.appendChild(d)};
   if(cs.site){
-    add(cs.prix!=null?eur.format(cs.prix):'–',`Prix moyen d'un repas à la cantine (${cs.repas} repas)`);
-    add(cs.parJour!=null?eur.format(cs.parJour):'–',`Coût moyen d'un midi à Saint-Denis (${cs.site} jours)`);
-    add(eur.format(cs.recharges),cs.solde?`Rechargé, dont ${eur.format(cs.solde.montant)} encore sur la carte`:'Rechargé au total (solde non renseigné)',true);
+    const jusqu=cs.D?`, jusqu'au ${new Date(cs.D+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}`:'';
+    add(cs.prix!=null?eur.format(cs.prix):'–',`Prix moyen d'un repas à la cantine (${cs.repas} repas${jusqu})`);
+    add(cs.parJour!=null?eur.format(cs.parJour):'–',`Coût moyen d'un midi à Saint-Denis (${cs.site} jours${jusqu})`);
+    add(eur.format(cs.rechargesAll),cs.solde?`Rechargé au total. Solde de ${eur.format(cs.solde.montant)} lu le ${new Date(cs.D+'T12:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}, avant le repas du jour`:'Rechargé au total (solde non renseigné)',true);
   }
   if(!$('solde').matches(':focus')&&!$('soldeDate').matches(':focus')){
     $('solde').value=cs.solde?fmtNum(cs.solde.montant.toFixed(2)):'';$('soldeDate').value=cs.solde?.date||'';
